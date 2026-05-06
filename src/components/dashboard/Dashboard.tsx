@@ -284,7 +284,7 @@ const Dashboard: React.FC<DashboardProps> = ({ session }) => {
     const { isOpen, onOpenChange, onOpen } = useDisclosure();
     const {
         data: stats = null,
-        isLoading: loading,
+        isPending: loading,
     } = useQuery<DashboardStats | null>({
         queryKey: ['dashboard-stats'],
         queryFn: async () => {

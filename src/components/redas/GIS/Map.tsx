@@ -11,6 +11,7 @@ import {
     FeatureGroup,
     useMap,
 } from 'react-leaflet';
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import {
     getAllPlaceCoordinates,
@@ -31,10 +32,12 @@ const SpecialButton = ({
     onClick,
     isDisabled,
     onGoToRedas,
+    onOpenConfirm,
 }: {
     onClick: () => void;
     isDisabled: boolean;
     onGoToRedas: () => void;
+    onOpenConfirm: () => void;
 }) => {
     const map = useMap();
     const containerRef = useRef<HTMLDivElement | null>(null);
@@ -78,11 +81,11 @@ const SpecialButton = ({
                     <div className="flex flex-col sm:flex-row gap-3">
                         {/* Fetch Places Button */}
                         <Button
-                            color="primary"
+                            className="bg-blue-900 text-white hover:bg-blue-800"
                             variant="shadow"
                             size="md"
                             isDisabled={isDisabled}
-                            onPress={onClick}
+                            onPress={onOpenConfirm}
                             startContent={
                                 isDisabled ? (
                                     <Spinner size="sm" color="white" />
@@ -90,19 +93,17 @@ const SpecialButton = ({
                                     <Download size={16} />
                                 )
                             }
-                            className="font-medium"
                         >
                             {isDisabled ? 'Fetching...' : 'Fetch Places'}
                         </Button>
 
                         {/* Go to Redas Button */}
                         <Button
-                            color="success"
+                            className="bg-green-700 text-white hover:bg-green-600"
                             variant="shadow"
                             size="md"
                             onPress={onGoToRedas}
                             endContent={<ArrowRight size={16} />}
-                            className="font-medium"
                         >
                             Go to Redas
                         </Button>
@@ -247,7 +248,7 @@ const AllControls = ({
     const map = useMap();
 
     return (
-        <div className="absolute bottom-12 right-4 z-[1000] flex flex-col gap-2">
+        <div className="absolute bottom-28 right-4 z-[1000] flex flex-col gap-2">
             {/* Zoom In Button */}
             <Button
                 isIconOnly
@@ -335,7 +336,10 @@ const AllControls = ({
     );
 };
 
+
+
 const Map = () => {
+    const [showConfirm, setShowConfirm] = useState(false);
     const router = useRouter();
     const [placeCoordinates, setPlaceCoordinates] = useState<PlaceCircleArea[]>(
         []
@@ -363,31 +367,48 @@ const Map = () => {
 
         return L.divIcon({
             html: `
+            <div style="
+                width: ${width}px;
+                height: ${height}px;
+                position: relative;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            ">
+
+                <!-- Outer pin -->
                 <div style="
                     width: ${width}px;
                     height: ${height}px;
-                    background: linear-gradient(135deg, ${color}, ${color}dd);
+                    background: ${color};
                     border-radius: 50% 50% 50% 0;
-                    border: 3px solid white;
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
                     transform: rotate(-45deg);
-                    position: relative;
-                ">
-                    <div style="
-                        transform: rotate(45deg);
-                        color: white;
-                        font-weight: bold;
-                        font-size: ${size === 'large' ? '16px' : size === 'medium' ? '14px' : '12px'};
-                    ">
-                        <svg width="${size === 'large' ? '20' : size === 'medium' ? '16' : '14'}" height="${size === 'large' ? '20' : size === 'medium' ? '16' : '14'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                            <circle cx="12" cy="10" r="3"/>
-                        </svg>
-                    </div>
-                </div>
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                    border: 3px solid white;
+                    position: absolute;
+                "></div>
+
+                <!-- Inner white ring -->
+                <div style="
+                    width: ${width * 0.5}px;
+                    height: ${width * 0.5}px;
+                    background: white;
+                    border-radius: 50%;
+                    position: absolute;
+                    z-index: 2;
+                "></div>
+
+                <!-- Center colored dot -->
+                <div style="
+                    width: ${width * 0.25}px;
+                    height: ${width * 0.25}px;
+                    background: ${color};
+                    border-radius: 50%;
+                    position: absolute;
+                    z-index: 3;
+                "></div>
+
+            </div>
             `,
             className: 'custom-marker',
             iconSize: [width, height],
@@ -397,10 +418,27 @@ const Map = () => {
     };
 
     const getMarkerStyle = (count: number) => {
-        if (count >= 40) return { color: '#ef4444', size: 'large' as const };
-        if (count >= 30) return { color: '#f97316', size: 'medium' as const };
-        if (count >= 20) return { color: '#eab308', size: 'medium' as const };
-        if (count >= 10) return { color: '#22c55e', size: 'medium' as const };
+        // 🔴 Very High: 21+
+        if (count >= 21) {
+            return { color: '#ef4444', size: 'large' as const };
+        }
+
+        // 🟠 High: 16–20
+        if (count >= 16) {
+            return { color: '#f97316', size: 'medium' as const };
+        }
+
+        // 🟡 Moderate: 10–15
+        if (count >= 10) {
+            return { color: '#eab308', size: 'medium' as const };
+        }
+
+        // 🟢 Low: 5–9
+        if (count >= 5) {
+            return { color: '#22c55e', size: 'medium' as const };
+        }
+
+        // 🔵 Very Low: 0–4
         return { color: '#3b82f6', size: 'small' as const };
     };
 
@@ -425,7 +463,7 @@ const Map = () => {
     };
 
     const handleGoToRedas = () => {
-        router.push('/overview/redas');
+        window.open('https://redas.phivolcs.dost.gov.ph/', '_blank');
     };
 
     useEffect(() => {
@@ -524,6 +562,7 @@ const Map = () => {
                     onClick={fetchPlaces}
                     isDisabled={isFetching}
                     onGoToRedas={handleGoToRedas}
+                    onOpenConfirm={() => setShowConfirm(true)}
                 />
 
                 <FeatureGroup>
@@ -555,6 +594,36 @@ const Map = () => {
                     hasCoordinates={placeCoordinates.length > 0}
                 />
             </MapContainer>
+
+            <Modal isOpen={showConfirm} onOpenChange={setShowConfirm}>
+                <ModalContent>
+                    {(onClose) => (
+                        <>
+                            <ModalHeader>Confirm Fetch</ModalHeader>
+                            <ModalBody>
+                                <p className="text-sm text-gray-600">
+                                    This will fetch updated training data from REDAS.
+                                    This process may take some time depending on the number of locations.
+                                </p>
+                            </ModalBody>
+                            <ModalFooter>
+                                <Button variant="light" onPress={onClose}>
+                                    Cancel
+                                </Button>
+                                <Button
+                                    className="bg-blue-900 text-white"
+                                    onPress={() => {
+                                        onClose();
+                                        fetchPlaces();
+                                    }}
+                                >
+                                    Confirm
+                                </Button>
+                            </ModalFooter>
+                        </>
+                    )}
+                </ModalContent>
+            </Modal>
 
             <LoadingOverlay
                 isVisible={isLoading}

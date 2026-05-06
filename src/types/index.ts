@@ -16,7 +16,11 @@ export interface CarouselItem {
     title: string;
     description: string;
     url: string;
-    image: string;
+    image?: string;
+    icon?: string;
+    bullets?: string[];
+    relativePosition?: number;
+    carouselIndex?: number;
 }
 
 // ... existing code ...

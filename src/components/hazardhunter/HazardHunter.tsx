@@ -1227,8 +1227,8 @@ const HazardHunter = () => {
                                                     <Button
                                                         isIconOnly
                                                         size="sm"
-                                                        variant="flat"
-                                                        className="rounded-xl border border-[#eadbc7] bg-white text-slate-700 shadow-sm hover:bg-[#f8f4ee] shrink-0"
+                                                        variant="solid"
+                                                        className="rounded-xl bg-gradient-to-r from-[#5A3A1A] via-[#7B5A3A] to-[#9D7C5A] text-white shadow-md hover:shadow-lg hover:scale-105 transition-all shrink-0"
                                                         onPress={handleDownloadAssessmentPDF}
                                                         isDisabled={!hazardData}
                                                         title="Download PDF"
@@ -1503,6 +1503,15 @@ const HazardHunter = () => {
                                                         })
                                                     }
                                                 />
+
+                                                <div className="pt-0.5 text-center">
+                                                    <button
+                                                        onClick={handleDownloadAssessmentPDF}
+                                                        className="text-sm font-semibold text-[#5A3A1A] hover:text-[#7B5A3A] underline underline-offset-4 transition-all"
+                                                    >
+                                                        Download Full Assessment Results as PDF
+                                                    </button>
+                                                </div>
                                             </div>
                                         ) : null}
                                     </div>

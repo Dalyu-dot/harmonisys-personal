@@ -13,7 +13,7 @@ import {
 } from '@heroui/react';
 import type { IncidentFormData } from '@/types';
 import { IncidentCategory, SeverityLevel } from '@prisma/client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DateValue, CalendarDate } from '@internationalized/date';
 
 type Props = {
@@ -77,6 +77,36 @@ const Questionnaire = ({ onClose, openSuccessModal }: Props) => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+
+        try {
+          // Using OpenStreetMap reverse geocoding (no API key needed)
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+          );
+          const data = await res.json();
+
+          if (data?.display_name) {
+            setForm((prev) => ({
+              ...prev,
+              location: prev.location || data.display_name,
+            }));
+          }
+        } catch (err) {
+          console.error('Location fetch error:', err);
+        }
+      },
+      (error) => {
+        console.warn('Geolocation permission denied or failed:', error);
+      }
+    );
+  }, []);
 
   const resetForm = () => {
     setForm({

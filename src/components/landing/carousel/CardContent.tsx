@@ -1,3 +1,4 @@
+import React from 'react';
 import type { CardContentProps } from '@/types';
 import { Button } from '@heroui/react';
 import Link from 'next/link';
@@ -17,10 +18,10 @@ type CardContentExtraProps = {
   isAuthenticated?: boolean;
 };
 
-const CardContent: React.FC<CardContentProps & CardContentExtraProps> = ({
+const CardContent = ({
   carouselItem,
   isAuthenticated = false,
-}) => {
+}: CardContentProps & CardContentExtraProps) => {
 
   if (!carouselItem) return null;
 

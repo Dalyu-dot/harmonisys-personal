@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import CarouselCard from './CarouselCard';
 import CardContent from './CardContent';
 import { carouselElements } from '@/constants';
+import type { CarouselItem } from '@/types';
 
 type CarouselProps = {
   isAuthenticated?: boolean;
@@ -16,6 +17,8 @@ const Carousel = ({ isAuthenticated = false }: CarouselProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1); // 1 = next, -1 = prev
   const [isMobile, setIsMobile] = useState(false);
+  const [autoSlideKey, setAutoSlideKey] = useState(0);
+  const [dragStartX, setDragStartX] = useState<number | null>(null);
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 639px)'); // < sm
@@ -27,6 +30,7 @@ const Carousel = ({ isAuthenticated = false }: CarouselProps) => {
   }, []);
 
   const scrollPrev = () => {
+    setAutoSlideKey((prev) => prev + 1);
     setDirection(-1);
     setCurrentIndex((prevIndex) =>
       prevIndex === 0 ? carouselElements.length - 1 : prevIndex - 1
@@ -34,33 +38,64 @@ const Carousel = ({ isAuthenticated = false }: CarouselProps) => {
   };
 
   const scrollNext = () => {
+    setAutoSlideKey((prev) => prev + 1);
     setDirection(1);
     setCurrentIndex((prevIndex) =>
       prevIndex === carouselElements.length - 1 ? 0 : prevIndex + 1
     );
   };
 
-  const getVisibleItems = useCallback(() => {
+    useEffect(() => {
+      const interval = setInterval(() => {
+        setDirection(1);
+        setCurrentIndex((prevIndex) =>
+          prevIndex === carouselElements.length - 1 ? 0 : prevIndex + 1
+        );
+      }, 4000);
+
+      return () => clearInterval(interval);
+    }, [autoSlideKey]);
+
+  const getVisibleItems = useCallback((): CarouselItem[] => {
     if (isMobile) {
       const item = carouselElements[currentIndex];
-      return [{ ...item, relativePosition: 0 }];
+      return [{ ...item, relativePosition: 0, carouselIndex: currentIndex }];
     }
 
-    const visibleItems: any[] = [];
-    for (let i = -1; i <= 1; i++) {
-      const index =
-        (currentIndex + i + carouselElements.length) % carouselElements.length;
+    return carouselElements.map((item, index) => {
+      let relativePosition = index - currentIndex;
 
-      visibleItems.push({
-        ...carouselElements[index],
-        relativePosition: i,
-      });
-    }
-    return visibleItems;
+      if (relativePosition > carouselElements.length / 2) {
+        relativePosition -= carouselElements.length;
+      }
+
+      if (relativePosition < -carouselElements.length / 2) {
+        relativePosition += carouselElements.length;
+      }
+
+      return {
+        ...item,
+        relativePosition,
+        carouselIndex: index,
+      };
+    });
   }, [currentIndex, isMobile]);
 
+        const handleDragEnd = (clientX: number) => {
+        if (dragStartX === null) return;
+
+        const diff = dragStartX - clientX;
+
+        if (Math.abs(diff) > 60) {
+          if (diff > 0) scrollNext();
+          else scrollPrev();
+        }
+
+        setDragStartX(null);
+      };
+
   return (
-    <section id="tools" className="relative overflow-hidden bg-white text-slate-900">
+    <section id="tools" className="relative overflow-x-hidden overflow-y-visible bg-white text-slate-900">
       <div className="relative container mx-auto px-6 w-full max-w-7xl pt-14 pb-10">
         {/* Header */}
         <div className="flex items-start justify-between gap-6">
@@ -112,52 +147,59 @@ const Carousel = ({ isAuthenticated = false }: CarouselProps) => {
           {/* ✅ allow vertical overflow (prevents top cut), keep horizontal clipping */}
           <div className="relative overflow-x-hidden overflow-y-visible [perspective:1300px]">
             {/* a bit more vertical room for hover lift */}
-            <div className="flex py-6 [transform-style:preserve-3d]">
+            <div
+              className="relative h-[34rem] py-8 select-none touch-pan-y [transform-style:preserve-3d]"
+              onPointerDown={(e) => setDragStartX(e.clientX)}
+              onPointerUp={(e) => handleDragEnd(e.clientX)}
+              onPointerCancel={() => setDragStartX(null)}
+            >
               {getVisibleItems().map((item) => {
-                const rp = item.relativePosition as -1 | 0 | 1;
+                const rp = item.relativePosition as number;
 
                 const center = rp === 0;
-                const side = rp !== 0;
+                const side = Math.abs(rp) === 1;
+                const hidden = Math.abs(rp) > 2;
 
-                /**
-                 * ✅ OUTWARD curve:
-                 * - left card rotates LEFT (negative Y)
-                 * - right card rotates RIGHT (positive Y)
-                 * (this is the opposite of the inward tilt)
-                 */
+                const distance = Math.abs(rp);
+
                 const rotateY = center ? 0 : rp === -1 ? -18 : 18;
+                const rotateZ = 0;
 
-                // Bring center forward, keep sides slightly forward (not sunken)
-                const translateZ = center ? 65 : 18;
+                const translateX = rp * 390;
+                const translateY = 0;
+                const translateZ = center ? 80 : -80;
 
-                const translateX = center ? 0 : rp === -1 ? -12 : 12;
-                const translateY = center ? 0 : 10;
-                const scale = center ? 1 : 0.935;
-
-                const entryX = direction === 1 ? 18 : -18;
+                const scale = center ? 1 : distance === 1 ? 0.82 : 0.65;
+                const opacity = hidden ? 0 : center ? 1 : distance === 1 ? 0.55 : 0;
+                const zIndex = center ? 30 : distance === 1 ? 20 : 0;
 
                 return (
                   <div
-                    key={`${item.title}-${item.relativePosition}`}
-                    className="flex-[0_0_100%] sm:flex-[0_0_50%] lg:flex-[0_0_33.333%] px-3 lg:px-4"
+                    key={item.carouselIndex}
+                    onClick={() => {
+                      if (rp === -1) scrollPrev();
+                      else if (rp === 1) scrollNext();
+                    }}
+                    className="absolute left-1/2 top-6 w-full sm:w-1/2 lg:w-1/3 px-3 lg:px-4"
                     style={{
                       willChange: 'transform, opacity',
                       transformStyle: 'preserve-3d',
                       transition:
-                        'transform 700ms cubic-bezier(0.16, 1, 0.3, 1), opacity 700ms ease',
-                      opacity: center ? 1 : 0.62,
+                        'transform 900ms cubic-bezier(0.16, 1, 0.3, 1), opacity 900ms ease',
+                      opacity,
+                      zIndex,
+                      pointerEvents: hidden ? 'none' : 'auto',
                       transform: `
+                        translateX(-50%)
                         translateX(${translateX}px)
                         translateY(${translateY}px)
                         translateZ(${translateZ}px)
                         rotateY(${rotateY}deg)
+                        rotateZ(${rotateZ}deg)
                         scale(${scale})
                       `,
-                      filter: side ? 'blur(0.12px)' : 'none',
-                      animation: center
-                        ? `${direction === 1 ? 'cardEnterRight3D' : 'cardEnterLeft3D'} 700ms cubic-bezier(0.16, 1, 0.3, 1)`
-                        : 'none',
-                      ['--entryX' as any]: `${entryX}px`,
+                      filter: center ? 'none' : 'blur(0.3px)',
+                      
                     }}
                   >
                     <CarouselCard
@@ -172,7 +214,7 @@ const Carousel = ({ isAuthenticated = false }: CarouselProps) => {
                         ${center ? 'ring-2 ring-slate-900/10 shadow-lg' : 'cursor-pointer hover:scale-[1.01]'}
                       `}
                     >
-                      <CardContent carouselItem={item} isAuthenticated={isAuthenticated} />
+                     <CardContent carouselItem={item} isAuthenticated={isAuthenticated} />
 
                     </CarouselCard>
                   </div>
@@ -187,7 +229,7 @@ const Carousel = ({ isAuthenticated = false }: CarouselProps) => {
         </div>
 
         {/* Indicators */}
-        <div className="mt-7 flex justify-center gap-2">
+        <div className="-mt-20 flex justify-center gap-2">
           {carouselElements.map((_, index) => (
             <button
               key={index}
@@ -230,38 +272,6 @@ const Carousel = ({ isAuthenticated = false }: CarouselProps) => {
           </Button>
         </div>
       </div>
-
-      <style jsx global>{`
-        @keyframes cardEnterRight3D {
-          0% {
-            opacity: 0;
-            transform: translateX(var(--entryX)) translateY(10px) translateZ(20px)
-              rotateY(10deg) scale(0.985);
-            filter: blur(0.7px);
-          }
-          100% {
-            opacity: 1;
-            transform: translateX(0) translateY(0) translateZ(65px) rotateY(0deg)
-              scale(1);
-            filter: blur(0);
-          }
-        }
-
-        @keyframes cardEnterLeft3D {
-          0% {
-            opacity: 0;
-            transform: translateX(var(--entryX)) translateY(10px) translateZ(20px)
-              rotateY(-10deg) scale(0.985);
-            filter: blur(0.7px);
-          }
-          100% {
-            opacity: 1;
-            transform: translateX(0) translateY(0) translateZ(65px) rotateY(0deg)
-              scale(1);
-            filter: blur(0);
-          }
-        }
-      `}</style>
     </section>
   );
 };

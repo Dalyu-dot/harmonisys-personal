@@ -18,6 +18,11 @@ type Props = {
     onCancel?: () => void;
 };
 
+const misaludTheme = {
+    primaryGradient: 'from-emerald-800 via-emerald-700 to-emerald-600',
+    primaryHover: 'from-emerald-900 via-emerald-800 to-emerald-700',
+};
+
 const roleOptions = [
     { key: 'TEAM_LEADER', label: 'Team Leader' },
     { key: 'TEAM_MEMBER', label: 'Team Member' },
@@ -194,17 +199,29 @@ const MiSaludRegistrationForm = ({ onSuccess, onCancel }: Props) => {
             <div className="flex justify-end gap-3 pt-2">
                 <Button
                     type="button"
-                    variant="light"
                     onPress={onCancel}
                     isDisabled={isSubmitting}
+                    className="
+                        bg-white/70 text-emerald-800 font-medium
+                        border border-emerald-200
+                        hover:bg-emerald-50
+                        transition-all duration-200
+                    "
                 >
                     Cancel
                 </Button>
 
                 <Button
                     type="submit"
-                    color="success"
                     isLoading={isSubmitting}
+                    className={`
+                        bg-gradient-to-r ${misaludTheme.primaryGradient}
+                        text-white font-semibold
+                        shadow-md
+                        hover:shadow-lg
+                        hover:brightness-110
+                        transition-all duration-200
+                    `}
                 >
                     Submit Registration
                 </Button>

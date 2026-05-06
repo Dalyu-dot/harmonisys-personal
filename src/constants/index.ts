@@ -38,7 +38,7 @@ export const overviewContent = {
         subdescription: `
            The tool was developed under the Disaster Risk Reduction and Management in Health Center under the NICHE Centers in the Regions for R&D (NICER) program for the Disaster Risk Reduction and Management in Health Center of the University of the Philippines Manila, headed by Dr. Carlos Primero D. Gundran.
             `,
-        imageUrl: '/drrmh.png',
+        imageUrl: '/iris_logo.png',
         url: ['/irs'],
     },
 

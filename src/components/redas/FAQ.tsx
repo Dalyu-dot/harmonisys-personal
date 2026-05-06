@@ -25,7 +25,6 @@ const redasTheme = {
   accentColor: 'border-blue-200',
 };
 
-
 type FAQItem = {
     question: string;
     answer: {
@@ -57,7 +56,11 @@ const FAQ: React.FC<FAQProps> = ({ data }) => {
                             <div key={i} className="space-y-2">
                                 <div className="flex items-start gap-2">
                                     <CheckCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                                    <h4 className="font-semibold text-slate-800 text-base">
+                                    <h4
+                                        className={`text-slate-800 text-base ${
+                                            section.points ? 'font-semibold' : 'font-normal'
+                                        }`}
+                                    >
                                         {section.title}
                                     </h4>
                                 </div>

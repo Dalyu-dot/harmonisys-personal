@@ -64,12 +64,20 @@ export interface IncidentGroup {
 type MiSaludProps = {
   userRole?: 'ADMIN' | 'RESPONDER' | 'STANDARD' | string;
 };
-
-const MiSalud = ({ userRole = 'STANDARD' }: MiSaludProps) => {
+    
+    const MiSalud = ({ userRole = 'STANDARD' }: MiSaludProps) => {
+    
+    const misaludTheme = {
+        primaryGradient:
+            'bg-gradient-to-r from-emerald-800 via-emerald-700 to-emerald-600',
+        primaryHover:
+            'hover:from-emerald-900 hover:via-emerald-800 hover:to-emerald-700',
+    };
+    const primaryGradient = misaludTheme.primaryGradient;
+    const primaryHover = misaludTheme.primaryHover;
     const roleRaw = String(userRole || 'STANDARD').toUpperCase();
-  const isResponderView = roleRaw.includes('RESPONDER'); // true for RESPONDER users
-  const isAdminView = roleRaw.includes('ADMIN');
-
+    const isResponderView = roleRaw.includes('RESPONDER');
+    const isAdminView = roleRaw.includes('ADMIN');
 
     const router = useRouter();
     useEffect(() => {
@@ -158,6 +166,7 @@ const MiSalud = ({ userRole = 'STANDARD' }: MiSaludProps) => {
     const [showQuestionnaireModal, setShowQuestionnaireModal] = useState(false);
     const [showRegistrationModal, setShowRegistrationModal] = useState(false);
     const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [recommendations, setRecommendations] = useState<Recommendation[]>(
         []
     );
@@ -393,6 +402,14 @@ const MiSalud = ({ userRole = 'STANDARD' }: MiSaludProps) => {
 
     const isArchiveView = selectedFilter === 'archive';
     const loadingOriginal = loadingTeams || loadingEvents;
+    const isTransitioningMembership =
+        loadingMembership || showRegistrationModal;
+    const showMembershipModal =
+        !isAdminView &&
+        !loadingMembership &&
+        !isSubmitting &&
+        membershipStatus &&
+        membershipStatus !== 'APPROVED';
 
     const isLoading = isArchiveView
         ? loadingOriginal
@@ -414,7 +431,7 @@ const MiSalud = ({ userRole = 'STANDARD' }: MiSaludProps) => {
                 {/* ✅ COMBINED HEADER + CONTROLS (like User Controller / REDAS) */}
                 <Card className="mb-8 bg-white/70 backdrop-blur-sm shadow-lg border border-white/20 overflow-hidden rounded-[28px]">
                 {/* ✅ HERO (top) */}
-                <div className="bg-gradient-to-r from-emerald-800 via-emerald-700 to-emerald-600">
+                <div className={`bg-gradient-to-r ${misaludTheme.primaryGradient}`}>
                     <div className="p-6">
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                         <div>
@@ -655,8 +672,13 @@ const MiSalud = ({ userRole = 'STANDARD' }: MiSaludProps) => {
                                 <MiSaludRegistrationForm
                                     onCancel={() => setShowRegistrationModal(false)}
                                     onSuccess={async () => {
+                                        setIsSubmitting(true);          // 🔒 lock UI transitions
+
                                         setShowRegistrationModal(false);
+
                                         await refetchMembership();
+
+                                        setIsSubmitting(false);         // 🔓 unlock after stable state
                                     }}
                                 />
                             </CardBody>
@@ -664,36 +686,36 @@ const MiSalud = ({ userRole = 'STANDARD' }: MiSaludProps) => {
                     </div>
                 )}
 
-                {/* 🔒 MiSalud Registration / Status Modal */}
-                {!isAdminView &&
-                !loadingMembership &&
-                membershipStatus !== 'APPROVED' &&
-                !showRegistrationModal && (
+                {/* 🔒 MiSalud Membership Modal (FIXED FLOW) */}
+                {showMembershipModal && !showRegistrationModal && (
                     <div className="fixed inset-x-0 top-[64px] bottom-0 z-[100] flex items-center justify-center bg-black/60 p-4">
                         <Card className="w-full max-w-lg shadow-2xl border border-white/20">
                             <CardBody className="p-6 text-center space-y-4">
-                                
+
+                                {/* NONE → Join Mi Salud */}
                                 {membershipStatus === 'NONE' && (
                                     <>
                                         <h2 className="text-2xl font-bold text-emerald-700">
                                             Join Mi Salud
                                         </h2>
+
                                         <p className="text-slate-600">
-                                            Before accessing the dashboard, you must register
-                                            your team or join an existing one.
+                                            Before accessing the dashboard, you must register your team or join an existing one.
                                         </p>
 
                                         <Button
-                                            color="success"
                                             onPress={() => {
+                                                setIsSubmitting(false);
                                                 setShowRegistrationModal(true);
                                             }}
+                                            className={`${misaludTheme.primaryGradient} text-white font-bold rounded-xl`}
                                         >
                                             Register Now
                                         </Button>
                                     </>
                                 )}
 
+                                {/* PENDING → Request Pending */}
                                 {membershipStatus === 'PENDING' && (
                                     <>
                                         <h2 className="text-xl font-bold text-yellow-600">
@@ -703,11 +725,12 @@ const MiSalud = ({ userRole = 'STANDARD' }: MiSaludProps) => {
                                         <p className="text-slate-600">
                                             {membershipData?.requestedRole === 'TEAM_LEADER'
                                                 ? 'Your team registration has been submitted and is now waiting for admin approval. You will be able to access Mi Salud once your request is approved.'
-                                                : 'Your join request has been submitted and is now waiting for your team leader’s approval. You will be able to access Mi Salud once your request is approved.'}
+                                                : 'Your join request is waiting for team leader approval.'}
                                         </p>
                                     </>
                                 )}
 
+                                {/* REJECTED → Rejected */}
                                 {membershipStatus === 'REJECTED' && (
                                     <>
                                         <h2 className="text-xl font-bold text-red-600">
@@ -715,7 +738,7 @@ const MiSalud = ({ userRole = 'STANDARD' }: MiSaludProps) => {
                                         </h2>
 
                                         <p className="text-slate-600">
-                                            Your previous request was not approved. You may review your details and submit a new request.
+                                            Your previous request was not approved. You may submit a new request.
                                         </p>
 
                                         {membershipData?.rejectionReason && (
@@ -730,15 +753,14 @@ const MiSalud = ({ userRole = 'STANDARD' }: MiSaludProps) => {
                                         )}
 
                                         <Button
-                                            className="bg-gradient-to-r from-emerald-700 to-emerald-600 hover:from-emerald-800 hover:to-emerald-700 text-white font-bold"
-                                            onPress={() => {
-                                                setShowRegistrationModal(true);
-                                            }}
+                                            className={`${misaludTheme.primaryGradient} text-white font-bold rounded-xl`}
+                                            onPress={() => setShowRegistrationModal(true)}
                                         >
                                             Submit Again
                                         </Button>
                                     </>
                                 )}
+
                             </CardBody>
                         </Card>
                     </div>
