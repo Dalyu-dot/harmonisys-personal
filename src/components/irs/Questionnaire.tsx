@@ -15,6 +15,7 @@ import type { IncidentFormData } from '@/types';
 import { IncidentCategory, SeverityLevel } from '@prisma/client';
 import { useState, useEffect } from 'react';
 import { DateValue, CalendarDate } from '@internationalized/date';
+import { CITY_TO_REGION } from '@/utils/philippineRegions';
 
 type Props = {
   onClose?: () => void;
@@ -74,19 +75,22 @@ const Questionnaire = ({ onClose, openSuccessModal }: Props) => {
     otherCategoryDetail: '',
     attachments: null,
   });
+  const [isLocating, setIsLocating] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState<string>('');
 
   useEffect(() => {
     if (!navigator.geolocation) return;
+
+    setIsLocating(true);
 
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
 
         try {
-          // Using OpenStreetMap reverse geocoding (no API key needed)
           const res = await fetch(
             `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
           );
@@ -95,15 +99,18 @@ const Questionnaire = ({ onClose, openSuccessModal }: Props) => {
           if (data?.display_name) {
             setForm((prev) => ({
               ...prev,
-              location: prev.location || data.display_name,
+              location: data.display_name,
             }));
           }
         } catch (err) {
           console.error('Location fetch error:', err);
+        } finally {
+          setIsLocating(false);
         }
       },
       (error) => {
-        console.warn('Geolocation permission denied or failed:', error);
+        console.warn('Geolocation failed:', error);
+        setIsLocating(false);
       }
     );
   }, []);
@@ -157,10 +164,25 @@ const Questionnaire = ({ onClose, openSuccessModal }: Props) => {
     onClose?.();
   };
 
+  const containsCity = (location: string) => {
+    if (!location) return false;
+
+    return Object.keys(CITY_TO_REGION).some((city) =>
+      location.toLowerCase().includes(city)
+    );
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setSubmitStatus('idle');
+
+  if (!containsCity(form.location)) {
+    setSubmitStatus('error');
+    setErrorMessage('Please ensure your location includes a valid city.');
+    setIsSubmitting(false);
+    return;
+  }
 
     const formData = new FormData();
 
@@ -240,28 +262,6 @@ const Questionnaire = ({ onClose, openSuccessModal }: Props) => {
   return (
     <div className="max-w-4xl">
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Status Messages */}
-        {submitStatus === 'error' && (
-          <Card className="rounded-2xl border border-red-200 bg-red-50">
-            <CardBody className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <p className="text-sm text-red-700 font-semibold">
-                  Error submitting incident report. Please try again.
-                </p>
-              </div>
-            </CardBody>
-          </Card>
-        )}
-
         {/* Basic Information Section */}
         <Card className={sectionCard}>
           <CardHeader className={sectionHeader}>
@@ -282,9 +282,14 @@ const Questionnaire = ({ onClose, openSuccessModal }: Props) => {
                 isRequired
                 name="location"
                 label="Location"
-                value={form.location}
+                value={isLocating ? 'Getting current location...' : form.location}
                 onChange={handleChange}
-                isDisabled={isSubmitting}
+                isDisabled={isSubmitting || isLocating}
+                description={
+                  isLocating
+                    ? 'Auto-detecting your current location...'
+                    : 'You can edit this manually (must include city)'
+                }
                 variant="bordered"
                 className="font-medium"
                 classNames={commonField}
@@ -549,6 +554,42 @@ const Questionnaire = ({ onClose, openSuccessModal }: Props) => {
             </Button>
         </div>
       </form>
+
+      {submitStatus === 'error' && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 animate-fadeIn">
+          
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+              <svg className="w-6 h-6 text-red-600" viewBox="0 0 20 20" fill="currentColor">
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+
+            <h2 className="text-lg font-bold text-red-600">Submission Error</h2>
+          </div>
+
+          <p className="text-slate-700 mb-6">
+            {errorMessage}
+          </p>
+
+          <div className="flex justify-end">
+            <Button
+              className="bg-[#7B122F] text-white"
+              onClick={() => setSubmitStatus('idle')}
+            >
+              Close
+            </Button>
+          </div>
+        </div>
+      </div>
+    )}
+
+
     </div>
   );
 };

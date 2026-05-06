@@ -379,7 +379,7 @@ export default function IRSOverview({
     },
     {
       title: 'Reports & Analytics',
-      subtitle: 'Summaries, charts, and comparisons',
+      subtitle: 'Summaries and charts',
       icon: <BarChart3 className="h-5 w-5 text-white" />,
       iconBg: 'bg-gradient-to-r from-[#2563EB] to-[#4F46E5]',
       onClick: () => {
