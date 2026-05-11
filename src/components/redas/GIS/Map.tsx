@@ -336,9 +336,29 @@ const AllControls = ({
     );
 };
 
+const ZoomTracker = ({ setZoomLevel }: { setZoomLevel: (z: number) => void }) => {
+    const map = useMap();
 
+    useEffect(() => {
+        const updateZoom = () => {
+            setZoomLevel(map.getZoom());
+        };
+
+        map.on('zoomend', updateZoom);
+
+        // set initial zoom
+        setZoomLevel(map.getZoom());
+
+        return () => {
+            map.off('zoomend', updateZoom);
+        };
+    }, [map, setZoomLevel]);
+
+    return null;
+};
 
 const Map = () => {
+    const [zoomLevel, setZoomLevel] = useState(7);
     const [showConfirm, setShowConfirm] = useState(false);
     const router = useRouter();
     const [placeCoordinates, setPlaceCoordinates] = useState<PlaceCircleArea[]>(
@@ -354,68 +374,89 @@ const Map = () => {
 
     // Move these functions to component scope
     const createCustomIcon = (
-        color: string,
-        size: 'small' | 'medium' | 'large' = 'medium'
-    ) => {
-        const sizeMap = {
-            small: { width: 32, height: 40, iconAnchor: [16, 40] },
-            medium: { width: 40, height: 50, iconAnchor: [20, 50] },
-            large: { width: 48, height: 60, iconAnchor: [24, 60] },
-        };
+    color: string,
+    baseSize: 'small' | 'medium' | 'large' = 'medium',
+    zoom: number
+) => {
+    // scale based on zoom level (VERY IMPORTANT FIX)
+    const zoomScale = Math.max(0.5, Math.min(1.2, zoom / 10));
 
-        const { width, height, iconAnchor } = sizeMap[size];
-
-        return L.divIcon({
-            html: `
-            <div style="
-                width: ${width}px;
-                height: ${height}px;
-                position: relative;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            ">
-
-                <!-- Outer pin -->
-                <div style="
-                    width: ${width}px;
-                    height: ${height}px;
-                    background: ${color};
-                    border-radius: 50% 50% 50% 0;
-                    transform: rotate(-45deg);
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-                    border: 3px solid white;
-                    position: absolute;
-                "></div>
-
-                <!-- Inner white ring -->
-                <div style="
-                    width: ${width * 0.5}px;
-                    height: ${width * 0.5}px;
-                    background: white;
-                    border-radius: 50%;
-                    position: absolute;
-                    z-index: 2;
-                "></div>
-
-                <!-- Center colored dot -->
-                <div style="
-                    width: ${width * 0.25}px;
-                    height: ${width * 0.25}px;
-                    background: ${color};
-                    border-radius: 50%;
-                    position: absolute;
-                    z-index: 3;
-                "></div>
-
-            </div>
-            `,
-            className: 'custom-marker',
-            iconSize: [width, height],
-            iconAnchor: iconAnchor as [number, number],
-            popupAnchor: [0, -height + 10],
-        });
+    const sizeMap = {
+        small: 28,
+        medium: 36,
+        large: 44,
     };
+
+    const base = sizeMap[baseSize];
+    const size = base * zoomScale;
+
+    return L.divIcon({
+        html: `
+        <div style="
+            width: ${size}px;
+            height: ${size}px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: translateY(-2px);
+        ">
+
+            <!-- 3D Shadow -->
+            <div style="
+                position: absolute;
+                width: ${size}px;
+                height: ${size}px;
+                background: rgba(0,0,0,0.25);
+                border-radius: 50%;
+                transform: translateY(3px) scale(0.85);
+                filter: blur(2px);
+            "></div>
+
+            <!-- Main Pin Body (3D effect) -->
+            <div style="
+                width: ${size}px;
+                height: ${size}px;
+                background: linear-gradient(145deg, ${color}, #494949);
+                border-radius: 50% 50% 50% 0;
+                transform: rotate(-45deg);
+                box-shadow:
+                    0 6px 14px rgba(0,0,0,0.35),
+                    inset -3px -3px 6px rgba(0,0,0,0.25),
+                    inset 2px 2px 4px rgba(255,255,255,0.25);
+                border: 2px solid white;
+                position: absolute;
+            "></div>
+
+            <!-- Inner Glow Ring -->
+            <div style="
+                width: ${size * 0.45}px;
+                height: ${size * 0.45}px;
+                background: white;
+                border-radius: 50%;
+                position: absolute;
+                z-index: 2;
+                opacity: 0.9;
+            "></div>
+
+            <!-- Center Dot -->
+            <div style="
+                width: ${size * 0.2}px;
+                height: ${size * 0.2}px;
+                background: ${color};
+                border-radius: 50%;
+                position: absolute;
+                z-index: 3;
+            "></div>
+
+        </div>
+        `,
+        className: 'custom-marker',
+        iconSize: [size, size],
+        iconAnchor: [size / 2, size],
+        popupAnchor: [0, -size],
+    });
+};
 
     const getMarkerStyle = (count: number) => {
         // 🔴 Very High: 21+
@@ -558,6 +599,8 @@ const Map = () => {
                     url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
                 />
 
+                <ZoomTracker setZoomLevel={setZoomLevel} />
+
                 <SpecialButton
                     onClick={fetchPlaces}
                     isDisabled={isFetching}
@@ -570,7 +613,8 @@ const Map = () => {
                         const markerStyle = getMarkerStyle(place.count);
                         const customIcon = createCustomIcon(
                             markerStyle.color,
-                            markerStyle.size
+                            markerStyle.size,
+                            zoomLevel
                         );
 
                         return (

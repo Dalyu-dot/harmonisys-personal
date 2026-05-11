@@ -10,6 +10,7 @@ import {
   ChevronRight,
   ExternalLink,
   ArrowRight,
+  Map,
   Award,
   Users,
   Video,
@@ -268,7 +269,7 @@ const REDASOverview = ({
                     href="/redas/gis"
                     className="font-bold text-white min-w-[140px] h-12 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 hover:scale-[1.02]"
                     size="lg"
-                    endContent={<ArrowRight className="w-5 h-5" />}
+                    endContent={<Map className="w-5 h-5" />}
                     style={{ backgroundColor: '#2563EB' }}
                     onMouseEnter={(e) => {
                       (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#1D4ED8';

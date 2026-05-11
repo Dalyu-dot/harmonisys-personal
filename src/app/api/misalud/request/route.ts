@@ -56,6 +56,47 @@ export async function POST(request: NextRequest) {
                 );
             }
 
+            // ✅ Check if approved team already exists
+            const existingTeam = await prisma.miSaludTeam.findFirst({
+                where: {
+                    name: {
+                        equals: teamName.trim(),
+                        mode: 'insensitive',
+                    },
+                },
+            });
+
+            if (existingTeam) {
+                return NextResponse.json(
+                    {
+                        error: 'Team/Department Name already exists or is already taken.',
+                    },
+                    { status: 400 }
+                );
+            }
+
+            // ✅ Check if another pending request already uses this name
+            const existingPendingRequest = await prisma.miSaludRequest.findFirst({
+                where: {
+                    teamName: {
+                        equals: teamName.trim(),
+                        mode: 'insensitive',
+                    },
+                    requestedRole: 'TEAM_LEADER',
+                    status: 'PENDING',
+                },
+            });
+
+            if (existingPendingRequest) {
+                return NextResponse.json(
+                    {
+                        error:
+                            'A pending registration already uses this Team/Department Name.',
+                    },
+                    { status: 400 }
+                );
+            }
+
             await prisma.miSaludRequest.create({
                 data: {
                     userId: session.user.id,

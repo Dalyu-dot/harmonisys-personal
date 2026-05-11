@@ -41,6 +41,7 @@ const MiSaludRegistrationForm = ({ onSuccess, onCancel }: Props) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
+    const [teamNameError, setTeamNameError] = useState('');
 
     useEffect(() => {
         const fetchApprovedTeams = async () => {
@@ -160,10 +161,30 @@ const MiSaludRegistrationForm = ({ onSuccess, onCancel }: Props) => {
                 <Input
                     label="Team/Department Name"
                     value={teamName}
-                    onChange={(e) => setTeamName(e.target.value)}
+                    onChange={(e) => {
+                        const value = e.target.value;
+
+                        setTeamName(value);
+
+                        const exists = approvedTeams.some(
+                            (team) =>
+                                team.name.trim().toLowerCase() ===
+                                value.trim().toLowerCase()
+                        );
+
+                        if (exists) {
+                            setTeamNameError(
+                                'Team/Department Name already exists or is taken.'
+                            );
+                        } else {
+                            setTeamNameError('');
+                        }
+                    }}
                     isRequired
                     variant="bordered"
                     placeholder="Enter your new team or department name"
+                    isInvalid={!!teamNameError}
+                    errorMessage={teamNameError}
                 />
             )}
 
@@ -214,6 +235,7 @@ const MiSaludRegistrationForm = ({ onSuccess, onCancel }: Props) => {
                 <Button
                     type="submit"
                     isLoading={isSubmitting}
+                    isDisabled={!!teamNameError}
                     className={`
                         bg-gradient-to-r ${misaludTheme.primaryGradient}
                         text-white font-semibold
