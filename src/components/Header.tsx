@@ -294,7 +294,7 @@ const toolsCssVars = {
                 className="font-bold text-lg tracking-wide text-white hover:!bg-white/10 active:!bg-transparent transition-colors duration-200 py-1 px-2"
                 startContent={
                 <Image
-                    src="/Logo 6.png"
+                    src="/Logo 1.png"
                     alt="Harmonisys Logo"
                     width={40}
                     height={40}
