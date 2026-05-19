@@ -324,23 +324,87 @@ const Header: React.FC<HeaderProps> = ({ session }) => {
                                                 </DropdownTrigger>
                                                 <DropdownMenu
                                                     aria-label="Tools menu"
-                                                    className="min-w-[220px] p-2 bg-white/95 backdrop-blur-md shadow-xl rounded-xl border border-gray-200"
+                                                    style={toolsCssVars}
+                                                    className="min-w-[280px] p-2 bg-white/95 backdrop-blur-md shadow-xl border border-gray-200 rounded-2xl"
                                                 >
-                                                    {headerLinks.map((tool) => (
-                                                        <DropdownItem
-                                                            key={tool.title}
-                                                            as={Link}
-                                                            href={tool.url}
-                                                            className="rounded-lg data-[hover=true]:bg-gray-100"
-                                                            startContent={
-                                                                toolIconMap[
-                                                                    tool.title
-                                                                ]
+                                                    <DropdownSection title="DRRM Tools">
+                                                        {footerLinks[1].links.map(
+                                                            (item) => {
+                                                                const icon =
+                                                                    toolIconMap[
+                                                                        item
+                                                                            .title
+                                                                    ] ?? (
+                                                                        <ShieldAlert className="w-4 h-4" />
+                                                                    );
+                                                                return (
+                                                                    <DropdownItem
+                                                                        key={
+                                                                            item.title
+                                                                        }
+                                                                        as={
+                                                                            Link
+                                                                        }
+                                                                        href={
+                                                                            item.url
+                                                                        }
+                                                                        aria-label={
+                                                                            item.title
+                                                                        }
+                                                                        className="
+            text-gray-900 py-3
+            data-[hover=true]:bg-[color:var(--tool-hover-bg)]
+            data-[hover=true]:text-[color:var(--tool-accent)]
+          "
+                                                                        startContent={
+                                                                            <div
+                                                                                className="p-2 rounded-lg"
+                                                                                style={{
+                                                                                    backgroundColor:
+                                                                                        'var(--tool-icon-bg)',
+                                                                                }}
+                                                                            >
+                                                                                <span
+                                                                                    style={{
+                                                                                        color: 'var(--tool-accent)',
+                                                                                    }}
+                                                                                >
+                                                                                    {
+                                                                                        icon
+                                                                                    }
+                                                                                </span>
+                                                                            </div>
+                                                                        }
+                                                                    >
+                                                                        <div className="flex flex-col">
+                                                                            <span className="font-medium">
+                                                                                {
+                                                                                    item.title
+                                                                                }
+                                                                            </span>
+                                                                            <span className="text-xs text-gray-500 mt-1">
+                                                                                {item.title ===
+                                                                                    'Incident Reporting System' &&
+                                                                                    'Real-time incident reporting'}
+                                                                                {item.title ===
+                                                                                    'REDAS' &&
+                                                                                    'Earthquake hazard assessment'}
+                                                                                {item.title ===
+                                                                                    'Unahon' &&
+                                                                                    'Mental health screening'}
+                                                                                {item.title ===
+                                                                                    'Mi Salud' &&
+                                                                                    'Responder wellness tracking'}
+                                                                                {item.title ===
+                                                                                    'HazardHunter' &&
+                                                                                    'Location-based hazard assessment'}
+                                                                            </span>
+                                                                        </div>
+                                                                    </DropdownItem>
+                                                                );
                                                             }
-                                                        >
-                                                            {tool.title}
-                                                        </DropdownItem>
-                                                    ))}
+                                                        )}
+                                                    </DropdownSection>
                                                 </DropdownMenu>
                                             </Dropdown>
                                         );
