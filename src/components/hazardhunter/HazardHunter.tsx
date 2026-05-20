@@ -156,51 +156,52 @@ const HazardHunterMap = dynamic(() => import('./HazardHunterMap'), {
 });
 
 const HazardHunter = () => {
-        const {
-            isOpen: isReportIncidentOpen,
-            onOpen: onOpenReportIncident,
-            onClose: onCloseReportIncident,
-            onOpenChange: onReportIncidentOpenChange,
-        } = useDisclosure();
-        const loadImageAsDataUrl = (src: string) =>
-        new Promise<{ dataUrl: string; width: number; height: number }>((resolve, reject) => {
-            const img = new Image();
-            img.crossOrigin = 'anonymous';
+    const {
+        isOpen: isReportIncidentOpen,
+        onOpen: onOpenReportIncident,
+        onClose: onCloseReportIncident,
+        onOpenChange: onReportIncidentOpenChange,
+    } = useDisclosure();
+    const loadImageAsDataUrl = (src: string) =>
+        new Promise<{ dataUrl: string; width: number; height: number }>(
+            (resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
 
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
 
-                const ctx = canvas.getContext('2d');
-                if (!ctx) {
-                    reject(new Error('Could not create canvas context'));
-                    return;
-                }
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) {
+                        reject(new Error('Could not create canvas context'));
+                        return;
+                    }
 
-                ctx.drawImage(img, 0, 0);
-                resolve({
-                    dataUrl: canvas.toDataURL('image/png'),
-                    width: img.width,
-                    height: img.height,
-                });
-            };
+                    ctx.drawImage(img, 0, 0);
+                    resolve({
+                        dataUrl: canvas.toDataURL('image/png'),
+                        width: img.width,
+                        height: img.height,
+                    });
+                };
 
-            img.onerror = reject;
-            img.src = src;
-        });
+                img.onerror = reject;
+                img.src = src;
+            }
+        );
 
-        const cleanText = (value?: string) =>
-            (value || 'N/A')
-                .replace(/<br\s*\/?>/gi, ' ')
-                .replace(/<\/?[^>]+(>|$)/g, ' ')
-                .replace(/&nbsp;/gi, ' ')
-                .replace(/\s+/g, ' ')
-                .trim();
+    const cleanText = (value?: string) =>
+        (value || 'N/A')
+            .replace(/<br\s*\/?>/gi, ' ')
+            .replace(/<\/?[^>]+(>|$)/g, ' ')
+            .replace(/&nbsp;/gi, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
 
-        const shortenText = (value?: string, maxLength = 95) => {
-
-            const splitTextToJustifiedLines = (
+    const shortenText = (value?: string, maxLength = 95) => {
+        const splitTextToJustifiedLines = (
             doc: jsPDF,
             text: string,
             maxWidth: number,
@@ -248,7 +249,12 @@ const HazardHunter = () => {
             fontSize: number;
             lineHeight: number;
         }) => {
-            const lines = splitTextToJustifiedLines(doc, text, maxWidth, fontSize);
+            const lines = splitTextToJustifiedLines(
+                doc,
+                text,
+                maxWidth,
+                fontSize
+            );
 
             doc.setFontSize(fontSize);
 
@@ -261,7 +267,10 @@ const HazardHunter = () => {
                     return;
                 }
 
-                const wordsWidth = words.reduce((sum, word) => sum + doc.getTextWidth(word), 0);
+                const wordsWidth = words.reduce(
+                    (sum, word) => sum + doc.getTextWidth(word),
+                    0
+                );
                 const totalSpacing = maxWidth - wordsWidth;
                 const gaps = words.length - 1;
                 const extraSpace = totalSpacing / gaps;
@@ -280,173 +289,172 @@ const HazardHunter = () => {
 
             return y + lines.length * lineHeight;
         };
-            const text = cleanText(value);
-            if (text.length <= maxLength) return text;
-            return `${text.slice(0, maxLength).trim()}...`;
-        };
+        const text = cleanText(value);
+        if (text.length <= maxLength) return text;
+        return `${text.slice(0, maxLength).trim()}...`;
+    };
 
+    const handleDownloadAssessmentPDF = async () => {
+        if (!hazardData) return;
 
-        const handleDownloadAssessmentPDF = async () => {
-            if (!hazardData) return;
+        const doc = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4',
+        });
 
-            const doc = new jsPDF({
-                orientation: 'portrait',
-                unit: 'mm',
-                format: 'a4',
-            });
+        const selectedLocation =
+            hazardData?.location?.name ||
+            placeInput ||
+            detectedLocationLabel ||
+            'Selected location';
 
-            const selectedLocation =
-                hazardData?.location?.name ||
-                placeInput ||
-                detectedLocationLabel ||
-                'Selected location';
+        const coordinatesText = hasValidMapCoordinates
+            ? `${mapCoordinates.lat.toFixed(6)}, ${mapCoordinates.lng.toFixed(6)}`
+            : 'N/A';
 
-            const coordinatesText = hasValidMapCoordinates
-                ? `${mapCoordinates.lat.toFixed(6)}, ${mapCoordinates.lng.toFixed(6)}`
-                : 'N/A';
+        try {
+            const logo = await loadImageAsDataUrl('/hazardHunter_logo.png');
 
-            try {
-                const logo = await loadImageAsDataUrl('/hazardHunter_logo.png');
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const maxLogoHeight = 32;
+            const logoAspectRatio = logo.width / logo.height;
 
-                const pageWidth = doc.internal.pageSize.getWidth();
-                const maxLogoHeight = 32;
-                const logoAspectRatio = logo.width / logo.height;
+            const logoHeight = maxLogoHeight;
+            const logoWidth = logoHeight * logoAspectRatio;
 
-                const logoHeight = maxLogoHeight;
-                const logoWidth = logoHeight * logoAspectRatio;
+            const logoX = pageWidth - logoWidth - 16; // move slightly left
+            const logoY = 8;
 
-                const logoX = pageWidth - logoWidth - 16; // move slightly left
-                const logoY = 8;
+            doc.addImage(
+                logo.dataUrl,
+                'PNG',
+                logoX,
+                logoY,
+                logoWidth,
+                logoHeight,
+                undefined,
+                'FAST'
+            );
+        } catch (error) {
+            console.error('Failed to load PDF logo:', error);
+        }
 
-                doc.addImage(
-                    logo.dataUrl,
-                    'PNG',
-                    logoX,
-                    logoY,
-                    logoWidth,
-                    logoHeight,
-                    undefined,
-                    'FAST'
-                );
-            } catch (error) {
-                console.error('Failed to load PDF logo:', error);
-            }
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(14);
+        doc.setTextColor(35, 43, 60);
+        doc.text('HazardHunter Assessment Results', 14, 16);
 
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(14);
-            doc.setTextColor(35, 43, 60);
-            doc.text('HazardHunter Assessment Results', 14, 16);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.8);
+        doc.setTextColor(80, 90, 110);
+        doc.text(`Selected Location: ${selectedLocation}`, 14, 25);
+        doc.text(`Coordinates: ${coordinatesText}`, 14, 30);
+        doc.text(`Total Hazards: ${getTotalHazards()}`, 14, 35);
+        doc.text(`High Risk Count: ${getHighRiskCount()}`, 14, 40);
 
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(7.8);
-            doc.setTextColor(80, 90, 110);
-            doc.text(`Selected Location: ${selectedLocation}`, 14, 25);
-            doc.text(`Coordinates: ${coordinatesText}`, 14, 30);
-            doc.text(`Total Hazards: ${getTotalHazards()}`, 14, 35);
-            doc.text(`High Risk Count: ${getHighRiskCount()}`, 14, 40);
-
-            autoTable(doc, {
-                startY: 48,
-                head: [['Hazard', 'Assessment', 'Details']],
-                body: [
-                    [
-                        'Active Fault',
-                        hazardData.activeFault.assessment,
-                        cleanText(
-                            `${hazardData.activeFault.distance} ${hazardData.activeFault.units} ${hazardData.activeFault.direction} | Fault: ${hazardData.activeFault.fault_name}`
-                        ),
-                    ],
-                    [
-                        'Ground Rupture',
-                        hazardData.groundRupture.assessment,
-                        cleanText(
-                            `${hazardData.groundRupture.distance} ${hazardData.groundRupture.units} ${hazardData.groundRupture.direction}`
-                        ),
-                    ],
-                    [
-                        'Ground Shaking',
-                        hazardData.groundShaking.assessment,
-                        cleanText(hazardData.groundShaking.explanation?.join(' ')),
-                    ],
-                    [
-                        'Earthquake Landslide',
-                        hazardData.eil.assessment,
-                        cleanText(hazardData.eil.explanation?.join(' ')),
-                    ],
-                    [
-                        'Liquefaction',
-                        hazardData.liquefaction.assessment,
-                        cleanText(hazardData.liquefaction.explanation?.join(' ')),
-                    ],
-                    [
-                        'Tsunami',
-                        hazardData.tsunami.assessment,
-                        cleanText(
-                            `${hazardData.tsunami.result} | ${hazardData.tsunami.explanation?.join(' ') || ''}`
-                        ),
-                    ],
-                    [
-                        'Flood Risk',
-                        hazardData.flood.assessment,
-                        cleanText(
-                            `${hazardData.flood.result} | ${hazardData.flood.explanation?.join(' ') || ''}`
-                        ),
-                    ],
-                    [
-                        'Rain Landslide',
-                        hazardData.ril.assessment,
-                        cleanText(
-                            `${hazardData.ril.result} | ${hazardData.ril.explanation?.join(' ') || ''}`
-                        ),
-                    ],
-                    [
-                        'Storm Surge',
-                        hazardData.stormSurge.assessment,
-                        cleanText(
-                            `${hazardData.stormSurge.result} | ${hazardData.stormSurge.explanation?.join(' ') || ''}`
-                        ),
-                    ],
-                    [
-                        'Volcanic Ashfall',
-                        hazardData.ashfall.assessment,
-                        cleanText(hazardData.ashfall.explanation?.join(' ')),
-                    ],
+        autoTable(doc, {
+            startY: 48,
+            head: [['Hazard', 'Assessment', 'Details']],
+            body: [
+                [
+                    'Active Fault',
+                    hazardData.activeFault.assessment,
+                    cleanText(
+                        `${hazardData.activeFault.distance} ${hazardData.activeFault.units} ${hazardData.activeFault.direction} | Fault: ${hazardData.activeFault.fault_name}`
+                    ),
                 ],
-                theme: 'grid',
-                styles: {
-                    fontSize: 8.2,
-                    cellPadding: 1.8,
-                    lineColor: [220, 220, 220],
-                    lineWidth: 0.15,
-                    overflow: 'linebreak',
-                    valign: 'top',
-                    textColor: [45, 55, 72],
-                    cellWidth: 'wrap',
-                },
-                headStyles: {
-                    fillColor: [90, 58, 26],
-                    textColor: [255, 255, 255],
-                    fontStyle: 'bold',
-                    fontSize: 8.4,
-                    cellPadding: 1.8,
-                },
-                columnStyles: {
-                    0: { cellWidth: 30 },
-                    1: { cellWidth: 34 },
-                    2: { cellWidth: 114 },
-                },
-                tableWidth: 178,
-                margin: { top: 48, right: 16, bottom: 8, left: 16 },
-                pageBreak: 'avoid',
-                rowPageBreak: 'avoid',
-            });
+                [
+                    'Ground Rupture',
+                    hazardData.groundRupture.assessment,
+                    cleanText(
+                        `${hazardData.groundRupture.distance} ${hazardData.groundRupture.units} ${hazardData.groundRupture.direction}`
+                    ),
+                ],
+                [
+                    'Ground Shaking',
+                    hazardData.groundShaking.assessment,
+                    cleanText(hazardData.groundShaking.explanation?.join(' ')),
+                ],
+                [
+                    'Earthquake Landslide',
+                    hazardData.eil.assessment,
+                    cleanText(hazardData.eil.explanation?.join(' ')),
+                ],
+                [
+                    'Liquefaction',
+                    hazardData.liquefaction.assessment,
+                    cleanText(hazardData.liquefaction.explanation?.join(' ')),
+                ],
+                [
+                    'Tsunami',
+                    hazardData.tsunami.assessment,
+                    cleanText(
+                        `${hazardData.tsunami.result} | ${hazardData.tsunami.explanation?.join(' ') || ''}`
+                    ),
+                ],
+                [
+                    'Flood Risk',
+                    hazardData.flood.assessment,
+                    cleanText(
+                        `${hazardData.flood.result} | ${hazardData.flood.explanation?.join(' ') || ''}`
+                    ),
+                ],
+                [
+                    'Rain Landslide',
+                    hazardData.ril.assessment,
+                    cleanText(
+                        `${hazardData.ril.result} | ${hazardData.ril.explanation?.join(' ') || ''}`
+                    ),
+                ],
+                [
+                    'Storm Surge',
+                    hazardData.stormSurge.assessment,
+                    cleanText(
+                        `${hazardData.stormSurge.result} | ${hazardData.stormSurge.explanation?.join(' ') || ''}`
+                    ),
+                ],
+                [
+                    'Volcanic Ashfall',
+                    hazardData.ashfall.assessment,
+                    cleanText(hazardData.ashfall.explanation?.join(' ')),
+                ],
+            ],
+            theme: 'grid',
+            styles: {
+                fontSize: 8.2,
+                cellPadding: 1.8,
+                lineColor: [220, 220, 220],
+                lineWidth: 0.15,
+                overflow: 'linebreak',
+                valign: 'top',
+                textColor: [45, 55, 72],
+                cellWidth: 'wrap',
+            },
+            headStyles: {
+                fillColor: [90, 58, 26],
+                textColor: [255, 255, 255],
+                fontStyle: 'bold',
+                fontSize: 8.4,
+                cellPadding: 1.8,
+            },
+            columnStyles: {
+                0: { cellWidth: 30 },
+                1: { cellWidth: 34 },
+                2: { cellWidth: 114 },
+            },
+            tableWidth: 178,
+            margin: { top: 48, right: 16, bottom: 8, left: 16 },
+            pageBreak: 'avoid',
+            rowPageBreak: 'avoid',
+        });
 
-            const safeFileName = selectedLocation
-                .replace(/[^\w\s-]/g, '')
-                .replace(/\s+/g, '_');
+        const safeFileName = selectedLocation
+            .replace(/[^\w\s-]/g, '')
+            .replace(/\s+/g, '_');
 
-            doc.save(`HazardHunter_Assessment_${safeFileName}.pdf`);
-        };
+        doc.save(`HazardHunter_Assessment_${safeFileName}.pdf`);
+    };
     const [placeInput, setPlaceInput] = useState('');
     const [nominatimResults, setNominatimResults] = useState<NominatimResult[]>(
         []
@@ -462,16 +470,18 @@ const HazardHunter = () => {
     const [loading, setLoading] = useState(false);
     const [searchingPlace, setSearchingPlace] = useState(false);
     const skipNextAutocomplete = useRef(false);
-    
+
     const activeAssessController = useRef<AbortController | null>(null);
     const latestAssessRequestId = useRef(0);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const [selectedHazardCard, setSelectedHazardCard] =
-    useState<SelectedHazardCard | null>(null);
+        useState<SelectedHazardCard | null>(null);
 
     const [isResultsPanelOpen, setIsResultsPanelOpen] = useState(true);
-    const [detectedLocationLabel, setDetectedLocationLabel] = useState<string | null>(null);
+    const [detectedLocationLabel, setDetectedLocationLabel] = useState<
+        string | null
+    >(null);
 
     useEffect(() => {
         const trimmed = placeInput.trim();
@@ -672,8 +682,8 @@ const HazardHunter = () => {
                 setHazardData(null);
                 setErrorMessage(
                     result?.data?.message ||
-                    result?.message ||
-                    'Failed to fetch hazard assessment data'
+                        result?.message ||
+                        'Failed to fetch hazard assessment data'
                 );
                 return;
             }
@@ -687,7 +697,8 @@ const HazardHunter = () => {
             } else {
                 setHazardData(null);
                 setErrorMessage(
-                    result?.data?.message || 'Failed to fetch hazard assessment data'
+                    result?.data?.message ||
+                        'Failed to fetch hazard assessment data'
                 );
             }
         } catch (error) {
@@ -753,9 +764,9 @@ const HazardHunter = () => {
     const mapCoordinates =
         hazardData?.coordinates?.latitude && hazardData?.coordinates?.longitude
             ? {
-                lat: Number.parseFloat(hazardData.coordinates.latitude),
-                lng: Number.parseFloat(hazardData.coordinates.longitude),
-            }
+                  lat: Number.parseFloat(hazardData.coordinates.latitude),
+                  lng: Number.parseFloat(hazardData.coordinates.longitude),
+              }
             : selectedCoordinates;
 
     const hasValidMapCoordinates =
@@ -862,7 +873,8 @@ const HazardHunter = () => {
                                 variant="flat"
                                 classNames={{
                                     base: 'max-w-full',
-                                    content: 'max-w-[220px] truncate font-semibold text-[11px]',
+                                    content:
+                                        'max-w-[220px] truncate font-semibold text-[11px]',
                                 }}
                                 title={assessment}
                             >
@@ -916,14 +928,10 @@ const HazardHunter = () => {
                             </p>
                         </div>
 
-                        <div className="shrink-0">
-                            {icon}
-                        </div>
+                        <div className="shrink-0">{icon}</div>
                     </div>
 
-                    <div className="flex-1">
-                        {value}
-                    </div>
+                    <div className="flex-1">{value}</div>
                 </div>
 
                 <div className="h-1.5 w-full mt-auto bg-[#f4ede5]">
@@ -934,90 +942,90 @@ const HazardHunter = () => {
     );
 
     const HazardResultCard = ({
-    title,
-    subtitle,
-    assessment,
-    icon,
-    summary,
-    detailLabel,
-    detailValue,
-    explanation,
-    onClick,
-}: HazardResultCardProps) => {
-    const chipColor = getAssessmentColor(assessment);
+        title,
+        subtitle,
+        assessment,
+        icon,
+        summary,
+        detailLabel,
+        detailValue,
+        explanation,
+        onClick,
+    }: HazardResultCardProps) => {
+        const chipColor = getAssessmentColor(assessment);
 
-    return (
-        <Card
-            isPressable
-            onPress={onClick}
-            className="group relative h-full min-h-[340px] rounded-3xl border border-[#eadbc7] bg-white/90 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden cursor-pointer"
+        return (
+            <Card
+                isPressable
+                onPress={onClick}
+                className="group relative h-full min-h-[340px] rounded-3xl border border-[#eadbc7] bg-white/90 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden cursor-pointer"
             >
-            <CardHeader className="px-5 pt-5 pb-4 sm:px-6 sm:pt-6">
-                <div className="flex items-center gap-3 w-full min-w-0">
-                    <div className="rounded-2xl bg-[#f8f1e8] border border-[#eadbc7] shrink-0 flex items-center justify-center w-11 h-11">
-                        {icon}
-                    </div>
+                <CardHeader className="px-5 pt-5 pb-4 sm:px-6 sm:pt-6">
+                    <div className="flex items-center gap-3 w-full min-w-0">
+                        <div className="rounded-2xl bg-[#f8f1e8] border border-[#eadbc7] shrink-0 flex items-center justify-center w-11 h-11">
+                            {icon}
+                        </div>
 
-                    <div className="min-w-0 pr-1 flex flex-col justify-center">
-                        <h3 className="text-base sm:text-lg font-bold text-slate-800 leading-tight break-words">
-                            {title}
-                        </h3>
-                        <p className="text-xs sm:text-sm text-slate-500 leading-tight">
-                            {subtitle}
-                        </p>
-                    </div>
-                </div>
-            </CardHeader>
-
-            <CardBody className="px-5 pb-5 pt-1 sm:px-6 sm:pb-6 flex flex-col min-w-0 h-full overflow-visible">
-                <div className="flex flex-col gap-3 flex-1">
-                    {detailValue && (
-                        <div className="rounded-2xl border border-[#efe3d6] bg-[#fcfaf7] px-4 py-3 min-h-[78px]">
-                            <p className="text-[11px] uppercase tracking-[0.12em] text-slate-500 font-bold mb-2">
-                                {detailLabel}
-                            </p>
-                            <p className="text-[14px] font-semibold text-slate-800 leading-6 break-words line-clamp-2">
-                                {detailValue}
+                        <div className="min-w-0 pr-1 flex flex-col justify-center">
+                            <h3 className="text-base sm:text-lg font-bold text-slate-800 leading-tight break-words">
+                                {title}
+                            </h3>
+                            <p className="text-xs sm:text-sm text-slate-500 leading-tight">
+                                {subtitle}
                             </p>
                         </div>
-                    )}
+                    </div>
+                </CardHeader>
 
-                    {summary && (
-                        <div className="rounded-2xl border border-[#efe3d6] bg-[#f8f4ee] px-4 py-3 min-h-[116px]">
-                            <p className="text-[11px] uppercase tracking-[0.12em] text-slate-500 font-bold mb-2">
-                                Summary
-                            </p>
-                            <p className="text-[14px] text-slate-700 leading-6 line-clamp-3 break-words">
-                                {summary}
-                            </p>
-                        </div>
-                    )}
-                </div>
+                <CardBody className="px-5 pb-5 pt-1 sm:px-6 sm:pb-6 flex flex-col min-w-0 h-full overflow-visible">
+                    <div className="flex flex-col gap-3 flex-1">
+                        {detailValue && (
+                            <div className="rounded-2xl border border-[#efe3d6] bg-[#fcfaf7] px-4 py-3 min-h-[78px]">
+                                <p className="text-[11px] uppercase tracking-[0.12em] text-slate-500 font-bold mb-2">
+                                    {detailLabel}
+                                </p>
+                                <p className="text-[14px] font-semibold text-slate-800 leading-6 break-words line-clamp-2">
+                                    {detailValue}
+                                </p>
+                            </div>
+                        )}
 
-                <div className="mt-5 pt-4 border-t border-[#efe3d6] min-w-0">
-                    <Chip
-                        size="sm"
-                        color={chipColor}
-                        variant="flat"
-                        classNames={{
-                            base: 'max-w-full min-w-0',
-                            content: 'truncate font-semibold text-[13px]',
-                        }}
-                        title={assessment}
-                    >
-                        {assessment}
-                    </Chip>
+                        {summary && (
+                            <div className="rounded-2xl border border-[#efe3d6] bg-[#f8f4ee] px-4 py-3 min-h-[116px]">
+                                <p className="text-[11px] uppercase tracking-[0.12em] text-slate-500 font-bold mb-2">
+                                    Summary
+                                </p>
+                                <p className="text-[14px] text-slate-700 leading-6 line-clamp-3 break-words">
+                                    {summary}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="mt-5 pt-4 border-t border-[#efe3d6] min-w-0">
+                        <Chip
+                            size="sm"
+                            color={chipColor}
+                            variant="flat"
+                            classNames={{
+                                base: 'max-w-full min-w-0',
+                                content: 'truncate font-semibold text-[13px]',
+                            }}
+                            title={assessment}
+                        >
+                            {assessment}
+                        </Chip>
+                    </div>
+                </CardBody>
+                {/* Hover Overlay */}
+                <div className="pointer-events-none absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center text-center px-6">
+                    <p className="text-white text-sm font-semibold">
+                        Click to see full details
+                    </p>
                 </div>
-            </CardBody>
-            {/* Hover Overlay */}
-            <div className="pointer-events-none absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center text-center px-6">
-                <p className="text-white text-sm font-semibold">
-                    Click to see full details
-                </p>
-            </div>
-        </Card>
-    );
-};
+            </Card>
+        );
+    };
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-[#f6f1e8] via-[#efe4d4] to-[#e8d7c2]">
@@ -1030,8 +1038,8 @@ const HazardHunter = () => {
                                     HazardHunter Dashboard
                                 </h1>
                                 <p className="text-white/85 text-lg">
-                                    Comprehensive natural hazard risk assessment and
-                                    safety analysis for any location
+                                    Comprehensive natural hazard risk assessment
+                                    and safety analysis for any location
                                 </p>
                             </div>
                             <a
@@ -1111,7 +1119,9 @@ const HazardHunter = () => {
 
                                 {errorMessage && (
                                     <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
-                                        <p className="text-sm font-medium text-red-700">{errorMessage}</p>
+                                        <p className="text-sm font-medium text-red-700">
+                                            {errorMessage}
+                                        </p>
                                     </div>
                                 )}
 
@@ -1149,7 +1159,8 @@ const HazardHunter = () => {
                             Hazard Assessment Map
                         </h2>
                         <p className="text-sm text-slate-500 mt-1">
-                            Double click anywhere on the map to choose a location and assess hazards instantly.
+                            Double click anywhere on the map to choose a
+                            location and assess hazards instantly.
                         </p>
                     </div>
 
@@ -1160,10 +1171,16 @@ const HazardHunter = () => {
                                     lat={mapCoordinates.lat}
                                     lng={mapCoordinates.lng}
                                     locationName={selectedLocationLabel}
-                                    highRiskCount={hazardData ? getHighRiskCount() : 0}
-                                    totalHazards={hazardData ? getTotalHazards() : 0}
+                                    highRiskCount={
+                                        hazardData ? getHighRiskCount() : 0
+                                    }
+                                    totalHazards={
+                                        hazardData ? getTotalHazards() : 0
+                                    }
                                     onLocationSelect={handleMapLocationSelect}
-                                    onLocationDoubleClick={handleMapLocationDoubleClick}
+                                    onLocationDoubleClick={
+                                        handleMapLocationDoubleClick
+                                    }
                                     onOpenReportIncident={onOpenReportIncident}
                                 />
                             </div>
@@ -1178,8 +1195,10 @@ const HazardHunter = () => {
                                         Select a Location
                                     </h3>
                                     <p className="text-slate-600 leading-relaxed text-base">
-                                        Use the search bar or click anywhere on the map to choose a location.
-                                        Then press Assess to view the hazard summary and detailed results in the side panel.
+                                        Use the search bar or click anywhere on
+                                        the map to choose a location. Then press
+                                        Assess to view the hazard summary and
+                                        detailed results in the side panel.
                                     </p>
                                 </div>
                             </div>
@@ -1195,7 +1214,8 @@ const HazardHunter = () => {
                                                     Assessment Results
                                                 </h3>
                                                 <p className="text-xs text-slate-500 mt-1">
-                                                    Live location summary and hazard assessment
+                                                    Live location summary and
+                                                    hazard assessment
                                                 </p>
                                             </div>
 
@@ -1204,7 +1224,9 @@ const HazardHunter = () => {
                                                 size="sm"
                                                 variant="flat"
                                                 className="rounded-xl"
-                                                onPress={() => setIsResultsPanelOpen(false)}
+                                                onPress={() =>
+                                                    setIsResultsPanelOpen(false)
+                                                }
                                             >
                                                 <PanelRightClose className="w-4 h-4" />
                                             </Button>
@@ -1220,7 +1242,9 @@ const HazardHunter = () => {
                                                             Selected Location
                                                         </p>
                                                         <p className="text-sm font-bold text-slate-800 mt-2 break-words">
-                                                            {selectedLocationLabel}
+                                                            {
+                                                                selectedLocationLabel
+                                                            }
                                                         </p>
                                                     </div>
 
@@ -1229,7 +1253,9 @@ const HazardHunter = () => {
                                                         size="sm"
                                                         variant="solid"
                                                         className="rounded-xl bg-gradient-to-r from-[#5A3A1A] via-[#7B5A3A] to-[#9D7C5A] text-white shadow-md hover:shadow-lg hover:scale-105 transition-all shrink-0"
-                                                        onPress={handleDownloadAssessmentPDF}
+                                                        onPress={
+                                                            handleDownloadAssessmentPDF
+                                                        }
                                                         isDisabled={!hazardData}
                                                         title="Download PDF"
                                                     >
@@ -1239,7 +1265,13 @@ const HazardHunter = () => {
 
                                                 {hasValidMapCoordinates && (
                                                     <p className="text-xs text-slate-500 break-all">
-                                                        {mapCoordinates.lat.toFixed(6)}, {mapCoordinates.lng.toFixed(6)}
+                                                        {mapCoordinates.lat.toFixed(
+                                                            6
+                                                        )}
+                                                        ,{' '}
+                                                        {mapCoordinates.lng.toFixed(
+                                                            6
+                                                        )}
                                                     </p>
                                                 )}
 
@@ -1249,7 +1281,9 @@ const HazardHunter = () => {
                                                             Hazards
                                                         </p>
                                                         <p className="text-2xl font-black text-slate-900 mt-2">
-                                                            {hazardData ? getTotalHazards() : 0}
+                                                            {hazardData
+                                                                ? getTotalHazards()
+                                                                : 0}
                                                         </p>
                                                     </div>
 
@@ -1258,7 +1292,9 @@ const HazardHunter = () => {
                                                             High Risk
                                                         </p>
                                                         <p className="text-2xl font-black text-slate-900 mt-2">
-                                                            {hazardData ? getHighRiskCount() : 0}
+                                                            {hazardData
+                                                                ? getHighRiskCount()
+                                                                : 0}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -1266,7 +1302,15 @@ const HazardHunter = () => {
                                                 {!hazardData && !loading && (
                                                     <div className="rounded-2xl border border-dashed border-[#d9c7b2] bg-white p-4">
                                                         <p className="text-sm text-slate-600 leading-relaxed">
-                                                            Select a location from search results or click the map, then press <span className="font-semibold">Assess</span> to view hazard results here.
+                                                            Select a location
+                                                            from search results
+                                                            or click the map,
+                                                            then press{' '}
+                                                            <span className="font-semibold">
+                                                                Assess
+                                                            </span>{' '}
+                                                            to view hazard
+                                                            results here.
                                                         </p>
                                                     </div>
                                                 )}
@@ -1275,45 +1319,65 @@ const HazardHunter = () => {
 
                                         {loading ? (
                                             <div className="space-y-3">
-                                                {Array.from({ length: 5 }).map((_, index) => (
-                                                    <Card
-                                                        key={index}
-                                                        className="rounded-2xl border border-[#eadbc7] bg-white/90 shadow-none"
-                                                    >
-                                                        <CardBody className="p-4 space-y-3">
-                                                            <div className="flex items-center gap-3">
-                                                                <Skeleton className="w-10 h-10 rounded-xl" />
-                                                                <div className="flex-1">
-                                                                    <Skeleton className="w-24 h-4 rounded mb-2" />
-                                                                    <Skeleton className="w-20 h-3 rounded" />
+                                                {Array.from({ length: 5 }).map(
+                                                    (_, index) => (
+                                                        <Card
+                                                            key={index}
+                                                            className="rounded-2xl border border-[#eadbc7] bg-white/90 shadow-none"
+                                                        >
+                                                            <CardBody className="p-4 space-y-3">
+                                                                <div className="flex items-center gap-3">
+                                                                    <Skeleton className="w-10 h-10 rounded-xl" />
+                                                                    <div className="flex-1">
+                                                                        <Skeleton className="w-24 h-4 rounded mb-2" />
+                                                                        <Skeleton className="w-20 h-3 rounded" />
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                            <Skeleton className="w-full h-12 rounded-xl" />
-                                                            <Skeleton className="w-28 h-5 rounded-full" />
-                                                        </CardBody>
-                                                    </Card>
-                                                ))}
+                                                                <Skeleton className="w-full h-12 rounded-xl" />
+                                                                <Skeleton className="w-28 h-5 rounded-full" />
+                                                            </CardBody>
+                                                        </Card>
+                                                    )
+                                                )}
                                             </div>
                                         ) : hazardData ? (
                                             <div className="space-y-3">
                                                 <FloatingPanelHazardCard
                                                     title="Active Fault"
                                                     subtitle="Seismic fault lines"
-                                                    assessment={hazardData.activeFault.assessment}
-                                                    icon={getHazardIcon('fault')}
+                                                    assessment={
+                                                        hazardData.activeFault
+                                                            .assessment
+                                                    }
+                                                    icon={getHazardIcon(
+                                                        'fault'
+                                                    )}
                                                     detailValue={`${hazardData.activeFault.distance} ${hazardData.activeFault.units} ${hazardData.activeFault.direction}`}
                                                     summary={`Nearest mapped fault: ${hazardData.activeFault.fault_name}`}
-                                                    explanation={hazardData.activeFault.explanation}
+                                                    explanation={
+                                                        hazardData.activeFault
+                                                            .explanation
+                                                    }
                                                     onClick={() =>
                                                         setSelectedHazardCard({
                                                             title: 'Active Fault',
-                                                            subtitle: 'Seismic fault lines',
-                                                            assessment: hazardData.activeFault.assessment,
-                                                            icon: getHazardIcon('fault'),
-                                                            detailLabel: 'Distance & Direction',
+                                                            subtitle:
+                                                                'Seismic fault lines',
+                                                            assessment:
+                                                                hazardData
+                                                                    .activeFault
+                                                                    .assessment,
+                                                            icon: getHazardIcon(
+                                                                'fault'
+                                                            ),
+                                                            detailLabel:
+                                                                'Distance & Direction',
                                                             detailValue: `${hazardData.activeFault.distance} ${hazardData.activeFault.units} ${hazardData.activeFault.direction}`,
                                                             summary: `Nearest mapped fault: ${hazardData.activeFault.fault_name}`,
-                                                            explanation: hazardData.activeFault.explanation,
+                                                            explanation:
+                                                                hazardData
+                                                                    .activeFault
+                                                                    .explanation,
                                                         })
                                                     }
                                                 />
@@ -1321,21 +1385,40 @@ const HazardHunter = () => {
                                                 <FloatingPanelHazardCard
                                                     title="Ground Rupture"
                                                     subtitle="Surface breaking"
-                                                    assessment={hazardData.groundRupture.assessment}
-                                                    icon={getHazardIcon('rupture')}
+                                                    assessment={
+                                                        hazardData.groundRupture
+                                                            .assessment
+                                                    }
+                                                    icon={getHazardIcon(
+                                                        'rupture'
+                                                    )}
                                                     detailValue={`${hazardData.groundRupture.distance} ${hazardData.groundRupture.units} ${hazardData.groundRupture.direction}`}
                                                     summary="Potential surface displacement risk related to nearby fault movement."
-                                                    explanation={hazardData.groundRupture.explanation}
+                                                    explanation={
+                                                        hazardData.groundRupture
+                                                            .explanation
+                                                    }
                                                     onClick={() =>
                                                         setSelectedHazardCard({
                                                             title: 'Ground Rupture',
-                                                            subtitle: 'Surface breaking',
-                                                            assessment: hazardData.groundRupture.assessment,
-                                                            icon: getHazardIcon('rupture'),
-                                                            detailLabel: 'Distance & Direction',
+                                                            subtitle:
+                                                                'Surface breaking',
+                                                            assessment:
+                                                                hazardData
+                                                                    .groundRupture
+                                                                    .assessment,
+                                                            icon: getHazardIcon(
+                                                                'rupture'
+                                                            ),
+                                                            detailLabel:
+                                                                'Distance & Direction',
                                                             detailValue: `${hazardData.groundRupture.distance} ${hazardData.groundRupture.units} ${hazardData.groundRupture.direction}`,
-                                                            summary: 'Potential surface displacement risk related to nearby fault movement.',
-                                                            explanation: hazardData.groundRupture.explanation,
+                                                            summary:
+                                                                'Potential surface displacement risk related to nearby fault movement.',
+                                                            explanation:
+                                                                hazardData
+                                                                    .groundRupture
+                                                                    .explanation,
                                                         })
                                                     }
                                                 />
@@ -1343,18 +1426,40 @@ const HazardHunter = () => {
                                                 <FloatingPanelHazardCard
                                                     title="Ground Shaking"
                                                     subtitle="Seismic intensity"
-                                                    assessment={hazardData.groundShaking.assessment}
-                                                    icon={getHazardIcon('shaking')}
-                                                    summary={hazardData.groundShaking.explanation?.[0]}
-                                                    explanation={hazardData.groundShaking.explanation?.join(' ')}
+                                                    assessment={
+                                                        hazardData.groundShaking
+                                                            .assessment
+                                                    }
+                                                    icon={getHazardIcon(
+                                                        'shaking'
+                                                    )}
+                                                    summary={
+                                                        hazardData.groundShaking
+                                                            .explanation?.[0]
+                                                    }
+                                                    explanation={hazardData.groundShaking.explanation?.join(
+                                                        ' '
+                                                    )}
                                                     onClick={() =>
                                                         setSelectedHazardCard({
                                                             title: 'Ground Shaking',
-                                                            subtitle: 'Seismic intensity',
-                                                            assessment: hazardData.groundShaking.assessment,
-                                                            icon: getHazardIcon('shaking'),
-                                                            summary: hazardData.groundShaking.explanation?.[0],
-                                                            explanation: hazardData.groundShaking.explanation?.join(' '),
+                                                            subtitle:
+                                                                'Seismic intensity',
+                                                            assessment:
+                                                                hazardData
+                                                                    .groundShaking
+                                                                    .assessment,
+                                                            icon: getHazardIcon(
+                                                                'shaking'
+                                                            ),
+                                                            summary:
+                                                                hazardData
+                                                                    .groundShaking
+                                                                    .explanation?.[0],
+                                                            explanation:
+                                                                hazardData.groundShaking.explanation?.join(
+                                                                    ' '
+                                                                ),
                                                         })
                                                     }
                                                 />
@@ -1362,18 +1467,38 @@ const HazardHunter = () => {
                                                 <FloatingPanelHazardCard
                                                     title="Earthquake Landslide"
                                                     subtitle="Seismic slope failure"
-                                                    assessment={hazardData.eil.assessment}
-                                                    icon={getHazardIcon('landslide')}
-                                                    summary={hazardData.eil.explanation?.[0]}
-                                                    explanation={hazardData.eil.explanation?.join(' ')}
+                                                    assessment={
+                                                        hazardData.eil
+                                                            .assessment
+                                                    }
+                                                    icon={getHazardIcon(
+                                                        'landslide'
+                                                    )}
+                                                    summary={
+                                                        hazardData.eil
+                                                            .explanation?.[0]
+                                                    }
+                                                    explanation={hazardData.eil.explanation?.join(
+                                                        ' '
+                                                    )}
                                                     onClick={() =>
                                                         setSelectedHazardCard({
                                                             title: 'Earthquake Landslide',
-                                                            subtitle: 'Seismic slope failure',
-                                                            assessment: hazardData.eil.assessment,
-                                                            icon: getHazardIcon('landslide'),
-                                                            summary: hazardData.eil.explanation?.[0],
-                                                            explanation: hazardData.eil.explanation?.join(' '),
+                                                            subtitle:
+                                                                'Seismic slope failure',
+                                                            assessment:
+                                                                hazardData.eil
+                                                                    .assessment,
+                                                            icon: getHazardIcon(
+                                                                'landslide'
+                                                            ),
+                                                            summary:
+                                                                hazardData.eil
+                                                                    .explanation?.[0],
+                                                            explanation:
+                                                                hazardData.eil.explanation?.join(
+                                                                    ' '
+                                                                ),
                                                         })
                                                     }
                                                 />
@@ -1381,18 +1506,40 @@ const HazardHunter = () => {
                                                 <FloatingPanelHazardCard
                                                     title="Liquefaction"
                                                     subtitle="Soil liquefaction risk"
-                                                    assessment={hazardData.liquefaction.assessment}
-                                                    icon={getHazardIcon('liquefaction')}
-                                                    summary={hazardData.liquefaction.explanation?.[0]}
-                                                    explanation={hazardData.liquefaction.explanation?.join(' ')}
+                                                    assessment={
+                                                        hazardData.liquefaction
+                                                            .assessment
+                                                    }
+                                                    icon={getHazardIcon(
+                                                        'liquefaction'
+                                                    )}
+                                                    summary={
+                                                        hazardData.liquefaction
+                                                            .explanation?.[0]
+                                                    }
+                                                    explanation={hazardData.liquefaction.explanation?.join(
+                                                        ' '
+                                                    )}
                                                     onClick={() =>
                                                         setSelectedHazardCard({
                                                             title: 'Liquefaction',
-                                                            subtitle: 'Soil liquefaction risk',
-                                                            assessment: hazardData.liquefaction.assessment,
-                                                            icon: getHazardIcon('liquefaction'),
-                                                            summary: hazardData.liquefaction.explanation?.[0],
-                                                            explanation: hazardData.liquefaction.explanation?.join(' '),
+                                                            subtitle:
+                                                                'Soil liquefaction risk',
+                                                            assessment:
+                                                                hazardData
+                                                                    .liquefaction
+                                                                    .assessment,
+                                                            icon: getHazardIcon(
+                                                                'liquefaction'
+                                                            ),
+                                                            summary:
+                                                                hazardData
+                                                                    .liquefaction
+                                                                    .explanation?.[0],
+                                                            explanation:
+                                                                hazardData.liquefaction.explanation?.join(
+                                                                    ' '
+                                                                ),
                                                         })
                                                     }
                                                 />
@@ -1400,21 +1547,50 @@ const HazardHunter = () => {
                                                 <FloatingPanelHazardCard
                                                     title="Tsunami"
                                                     subtitle="Seismic sea waves"
-                                                    assessment={hazardData.tsunami.assessment}
-                                                    icon={getHazardIcon('tsunami')}
-                                                    detailValue={hazardData.tsunami.result}
-                                                    summary={hazardData.tsunami.explanation?.[0]}
-                                                    explanation={hazardData.tsunami.explanation?.join(' ')}
+                                                    assessment={
+                                                        hazardData.tsunami
+                                                            .assessment
+                                                    }
+                                                    icon={getHazardIcon(
+                                                        'tsunami'
+                                                    )}
+                                                    detailValue={
+                                                        hazardData.tsunami
+                                                            .result
+                                                    }
+                                                    summary={
+                                                        hazardData.tsunami
+                                                            .explanation?.[0]
+                                                    }
+                                                    explanation={hazardData.tsunami.explanation?.join(
+                                                        ' '
+                                                    )}
                                                     onClick={() =>
                                                         setSelectedHazardCard({
                                                             title: 'Tsunami',
-                                                            subtitle: 'Seismic sea waves',
-                                                            assessment: hazardData.tsunami.assessment,
-                                                            icon: getHazardIcon('tsunami'),
-                                                            detailLabel: 'Assessment Result',
-                                                            detailValue: hazardData.tsunami.result,
-                                                            summary: hazardData.tsunami.explanation?.[0],
-                                                            explanation: hazardData.tsunami.explanation?.join(' '),
+                                                            subtitle:
+                                                                'Seismic sea waves',
+                                                            assessment:
+                                                                hazardData
+                                                                    .tsunami
+                                                                    .assessment,
+                                                            icon: getHazardIcon(
+                                                                'tsunami'
+                                                            ),
+                                                            detailLabel:
+                                                                'Assessment Result',
+                                                            detailValue:
+                                                                hazardData
+                                                                    .tsunami
+                                                                    .result,
+                                                            summary:
+                                                                hazardData
+                                                                    .tsunami
+                                                                    .explanation?.[0],
+                                                            explanation:
+                                                                hazardData.tsunami.explanation?.join(
+                                                                    ' '
+                                                                ),
                                                         })
                                                     }
                                                 />
@@ -1422,21 +1598,46 @@ const HazardHunter = () => {
                                                 <FloatingPanelHazardCard
                                                     title="Flood Risk"
                                                     subtitle="Water inundation"
-                                                    assessment={hazardData.flood.assessment}
-                                                    icon={getHazardIcon('flood')}
-                                                    detailValue={hazardData.flood.result}
-                                                    summary={hazardData.flood.explanation?.[0]}
-                                                    explanation={hazardData.flood.explanation?.join(' ')}
+                                                    assessment={
+                                                        hazardData.flood
+                                                            .assessment
+                                                    }
+                                                    icon={getHazardIcon(
+                                                        'flood'
+                                                    )}
+                                                    detailValue={
+                                                        hazardData.flood.result
+                                                    }
+                                                    summary={
+                                                        hazardData.flood
+                                                            .explanation?.[0]
+                                                    }
+                                                    explanation={hazardData.flood.explanation?.join(
+                                                        ' '
+                                                    )}
                                                     onClick={() =>
                                                         setSelectedHazardCard({
                                                             title: 'Flood Risk',
-                                                            subtitle: 'Water inundation',
-                                                            assessment: hazardData.flood.assessment,
-                                                            icon: getHazardIcon('flood'),
-                                                            detailLabel: 'Assessment Result',
-                                                            detailValue: hazardData.flood.result,
-                                                            summary: hazardData.flood.explanation?.[0],
-                                                            explanation: hazardData.flood.explanation?.join(' '),
+                                                            subtitle:
+                                                                'Water inundation',
+                                                            assessment:
+                                                                hazardData.flood
+                                                                    .assessment,
+                                                            icon: getHazardIcon(
+                                                                'flood'
+                                                            ),
+                                                            detailLabel:
+                                                                'Assessment Result',
+                                                            detailValue:
+                                                                hazardData.flood
+                                                                    .result,
+                                                            summary:
+                                                                hazardData.flood
+                                                                    .explanation?.[0],
+                                                            explanation:
+                                                                hazardData.flood.explanation?.join(
+                                                                    ' '
+                                                                ),
                                                         })
                                                     }
                                                 />
@@ -1444,21 +1645,46 @@ const HazardHunter = () => {
                                                 <FloatingPanelHazardCard
                                                     title="Rain Landslide"
                                                     subtitle="Rainfall-induced slides"
-                                                    assessment={hazardData.ril.assessment}
-                                                    icon={getHazardIcon('landslide')}
-                                                    detailValue={hazardData.ril.result}
-                                                    summary={hazardData.ril.explanation?.[0]}
-                                                    explanation={hazardData.ril.explanation?.join(' ')}
+                                                    assessment={
+                                                        hazardData.ril
+                                                            .assessment
+                                                    }
+                                                    icon={getHazardIcon(
+                                                        'landslide'
+                                                    )}
+                                                    detailValue={
+                                                        hazardData.ril.result
+                                                    }
+                                                    summary={
+                                                        hazardData.ril
+                                                            .explanation?.[0]
+                                                    }
+                                                    explanation={hazardData.ril.explanation?.join(
+                                                        ' '
+                                                    )}
                                                     onClick={() =>
                                                         setSelectedHazardCard({
                                                             title: 'Rain Landslide',
-                                                            subtitle: 'Rainfall-induced slides',
-                                                            assessment: hazardData.ril.assessment,
-                                                            icon: getHazardIcon('landslide'),
-                                                            detailLabel: 'Assessment Result',
-                                                            detailValue: hazardData.ril.result,
-                                                            summary: hazardData.ril.explanation?.[0],
-                                                            explanation: hazardData.ril.explanation?.join(' '),
+                                                            subtitle:
+                                                                'Rainfall-induced slides',
+                                                            assessment:
+                                                                hazardData.ril
+                                                                    .assessment,
+                                                            icon: getHazardIcon(
+                                                                'landslide'
+                                                            ),
+                                                            detailLabel:
+                                                                'Assessment Result',
+                                                            detailValue:
+                                                                hazardData.ril
+                                                                    .result,
+                                                            summary:
+                                                                hazardData.ril
+                                                                    .explanation?.[0],
+                                                            explanation:
+                                                                hazardData.ril.explanation?.join(
+                                                                    ' '
+                                                                ),
                                                         })
                                                     }
                                                 />
@@ -1466,21 +1692,50 @@ const HazardHunter = () => {
                                                 <FloatingPanelHazardCard
                                                     title="Storm Surge"
                                                     subtitle="Coastal storm waves"
-                                                    assessment={hazardData.stormSurge.assessment}
-                                                    icon={getHazardIcon('storm')}
-                                                    detailValue={hazardData.stormSurge.result}
-                                                    summary={hazardData.stormSurge.explanation?.[0]}
-                                                    explanation={hazardData.stormSurge.explanation?.join(' ')}
+                                                    assessment={
+                                                        hazardData.stormSurge
+                                                            .assessment
+                                                    }
+                                                    icon={getHazardIcon(
+                                                        'storm'
+                                                    )}
+                                                    detailValue={
+                                                        hazardData.stormSurge
+                                                            .result
+                                                    }
+                                                    summary={
+                                                        hazardData.stormSurge
+                                                            .explanation?.[0]
+                                                    }
+                                                    explanation={hazardData.stormSurge.explanation?.join(
+                                                        ' '
+                                                    )}
                                                     onClick={() =>
                                                         setSelectedHazardCard({
                                                             title: 'Storm Surge',
-                                                            subtitle: 'Coastal storm waves',
-                                                            assessment: hazardData.stormSurge.assessment,
-                                                            icon: getHazardIcon('storm'),
-                                                            detailLabel: 'Assessment Result',
-                                                            detailValue: hazardData.stormSurge.result,
-                                                            summary: hazardData.stormSurge.explanation?.[0],
-                                                            explanation: hazardData.stormSurge.explanation?.join(' '),
+                                                            subtitle:
+                                                                'Coastal storm waves',
+                                                            assessment:
+                                                                hazardData
+                                                                    .stormSurge
+                                                                    .assessment,
+                                                            icon: getHazardIcon(
+                                                                'storm'
+                                                            ),
+                                                            detailLabel:
+                                                                'Assessment Result',
+                                                            detailValue:
+                                                                hazardData
+                                                                    .stormSurge
+                                                                    .result,
+                                                            summary:
+                                                                hazardData
+                                                                    .stormSurge
+                                                                    .explanation?.[0],
+                                                            explanation:
+                                                                hazardData.stormSurge.explanation?.join(
+                                                                    ' '
+                                                                ),
                                                         })
                                                     }
                                                 />
@@ -1488,28 +1743,53 @@ const HazardHunter = () => {
                                                 <FloatingPanelHazardCard
                                                     title="Volcanic Ashfall"
                                                     subtitle="Volcanic ash deposits"
-                                                    assessment={hazardData.ashfall.assessment}
-                                                    icon={getHazardIcon('ashfall')}
-                                                    summary={hazardData.ashfall.explanation?.[0]}
-                                                    explanation={hazardData.ashfall.explanation?.join(' ')}
+                                                    assessment={
+                                                        hazardData.ashfall
+                                                            .assessment
+                                                    }
+                                                    icon={getHazardIcon(
+                                                        'ashfall'
+                                                    )}
+                                                    summary={
+                                                        hazardData.ashfall
+                                                            .explanation?.[0]
+                                                    }
+                                                    explanation={hazardData.ashfall.explanation?.join(
+                                                        ' '
+                                                    )}
                                                     onClick={() =>
                                                         setSelectedHazardCard({
                                                             title: 'Volcanic Ashfall',
-                                                            subtitle: 'Volcanic ash deposits',
-                                                            assessment: hazardData.ashfall.assessment,
-                                                            icon: getHazardIcon('ashfall'),
-                                                            summary: hazardData.ashfall.explanation?.[0],
-                                                            explanation: hazardData.ashfall.explanation?.join(' '),
+                                                            subtitle:
+                                                                'Volcanic ash deposits',
+                                                            assessment:
+                                                                hazardData
+                                                                    .ashfall
+                                                                    .assessment,
+                                                            icon: getHazardIcon(
+                                                                'ashfall'
+                                                            ),
+                                                            summary:
+                                                                hazardData
+                                                                    .ashfall
+                                                                    .explanation?.[0],
+                                                            explanation:
+                                                                hazardData.ashfall.explanation?.join(
+                                                                    ' '
+                                                                ),
                                                         })
                                                     }
                                                 />
 
                                                 <div className="pt-0.5 text-center">
                                                     <button
-                                                        onClick={handleDownloadAssessmentPDF}
+                                                        onClick={
+                                                            handleDownloadAssessmentPDF
+                                                        }
                                                         className="text-sm font-semibold text-[#5A3A1A] hover:text-[#7B5A3A] underline underline-offset-4 transition-all"
                                                     >
-                                                        Download Full Assessment Results as PDF
+                                                        Download Full Assessment
+                                                        Results as PDF
                                                     </button>
                                                 </div>
                                             </div>
@@ -1524,7 +1804,9 @@ const HazardHunter = () => {
                                 <Button
                                     onPress={() => setIsResultsPanelOpen(true)}
                                     className="rounded-2xl shadow-xl bg-white/95 text-slate-800 border border-[#eadbc7]"
-                                    startContent={<PanelRightOpen className="w-4 h-4" />}
+                                    startContent={
+                                        <PanelRightOpen className="w-4 h-4" />
+                                    }
                                 >
                                     Show Results
                                 </Button>
@@ -1626,7 +1908,9 @@ const HazardHunter = () => {
                                                     {selectedHazardCard.title}
                                                 </h3>
                                                 <p className="text-sm text-slate-500 mt-1">
-                                                    {selectedHazardCard.subtitle}
+                                                    {
+                                                        selectedHazardCard.subtitle
+                                                    }
                                                 </p>
                                             </div>
                                         </div>
@@ -1653,36 +1937,44 @@ const HazardHunter = () => {
                                             <p
                                                 className="text-[15px] text-slate-700 leading-7 break-words"
                                                 dangerouslySetInnerHTML={{
-                                                    __html: selectedHazardCard.explanation || '',
+                                                    __html:
+                                                        selectedHazardCard.explanation ||
+                                                        '',
                                                 }}
                                             />
                                         </div>
                                     )}
 
-                                    {!selectedHazardCard?.explanation && selectedHazardCard?.summary && (
-                                        <div className="rounded-2xl border border-[#efe3d6] bg-[#f8f4ee] px-4 py-4">
-                                            <p className="text-[11px] uppercase tracking-[0.12em] text-slate-500 font-bold mb-2">
-                                                Full Details
-                                            </p>
-                                            <p
-                                                className="text-[15px] text-slate-700 leading-7 break-words"
-                                                dangerouslySetInnerHTML={{
-                                                    __html: selectedHazardCard.summary || '',
-                                                }}
-                                            />
-                                        </div>
-                                    )}
+                                    {!selectedHazardCard?.explanation &&
+                                        selectedHazardCard?.summary && (
+                                            <div className="rounded-2xl border border-[#efe3d6] bg-[#f8f4ee] px-4 py-4">
+                                                <p className="text-[11px] uppercase tracking-[0.12em] text-slate-500 font-bold mb-2">
+                                                    Full Details
+                                                </p>
+                                                <p
+                                                    className="text-[15px] text-slate-700 leading-7 break-words"
+                                                    dangerouslySetInnerHTML={{
+                                                        __html:
+                                                            selectedHazardCard.summary ||
+                                                            '',
+                                                    }}
+                                                />
+                                            </div>
+                                        )}
                                 </ModalBody>
 
                                 <ModalFooter className="px-6 pb-6 pt-4 border-t border-[#efe3d6] flex items-center justify-between gap-4">
                                     {selectedHazardCard && (
                                         <Chip
                                             size="md"
-                                            color={getAssessmentColor(selectedHazardCard.assessment)}
+                                            color={getAssessmentColor(
+                                                selectedHazardCard.assessment
+                                            )}
                                             variant="flat"
                                             classNames={{
                                                 base: 'max-w-full',
-                                                content: 'font-semibold text-[14px] whitespace-normal break-words',
+                                                content:
+                                                    'font-semibold text-[14px] whitespace-normal break-words',
                                             }}
                                         >
                                             {selectedHazardCard.assessment}

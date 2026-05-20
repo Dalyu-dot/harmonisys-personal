@@ -48,7 +48,6 @@ export async function POST(request: NextRequest) {
         const category = formData.get('category') as string;
         const reporter = formData.get('reporter') as string;
         const contact = formData.get('contact') as string;
-        const severity = formData.get('severity') as string;
         const teamDeployed = formData.get('teamDeployed') as string;
         const otherCategoryDetail = formData.get('otherCategoryDetail') as
             | string
@@ -61,7 +60,6 @@ export async function POST(request: NextRequest) {
             !summary ||
             !description ||
             !category ||
-            !severity ||
             !teamDeployed
         ) {
             return NextResponse.json(
@@ -114,7 +112,6 @@ export async function POST(request: NextRequest) {
                 category: convertCategoryToEnum(category),
                 reporter: reporter || null,
                 contact: contact || null,
-                severity: convertSeverityToEnum(severity),
                 teamDeployed,
                 attachments,
                 otherCategoryDetail:

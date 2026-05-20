@@ -69,7 +69,6 @@ export interface IncidentFormData {
     otherCategoryDetail?: string;
     reporter?: string;
     contact?: string;
-    severity: string;
     teamDeployed: string;
     attachments?: FileList | null;
 }

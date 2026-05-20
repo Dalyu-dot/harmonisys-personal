@@ -299,7 +299,7 @@ const Header: React.FC<HeaderProps> = ({ session }) => {
                                             HARMONISYS.PH
                                         </span>
                                         <span className="text-xs opacity-80 font-normal hidden sm:block">
-                                            DRRM Platform
+                                            DRRM-H Platform
                                         </span>
                                     </div>
                                 </Button>
