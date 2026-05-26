@@ -89,6 +89,8 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
             );
         }
 
+        const teamName = leaderMembership.team.name;
+
         if (action === 'REJECT') {
             const updated = await prisma.miSaludRequest.update({
                 where: { id },
@@ -97,6 +99,21 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
                     reviewedAt: new Date(),
                     reviewedById: session.user.id,
                     rejectionReason: rejectionReason || null,
+                },
+            });
+
+            await prisma.notification.create({
+                data: {
+                    userId: existingRequest.userId,
+                    type: 'MISALUD_TEAM_REJECTED',
+                    title: 'MiSalud Request Rejected',
+                    message: rejectionReason
+                        ? `Your request to join ${teamName} as a Team Member was rejected. Reason: ${rejectionReason}`
+                        : `Your request to join ${teamName} as a Team Member has been rejected.`,
+                    read: false,
+                    refId: id,
+                    refType: 'MISALUD_REQUEST',
+                    link: '/misalud/membership',
                 },
             });
 
@@ -141,10 +158,20 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
                 },
             });
 
-            return {
-                membership,
-                updatedRequest,
-            };
+            await tx.notification.create({
+                data: {
+                    userId: existingRequest.userId,
+                    type: 'MISALUD_TEAM_APPROVED',
+                    title: 'MiSalud Request Approved',
+                    message: `Your request to join ${teamName} as a Team Member has been approved.`,
+                    read: false,
+                    refId: id,
+                    refType: 'MISALUD_REQUEST',
+                    link: '/misalud/membership',
+                },
+            });
+
+            return { membership, updatedRequest };
         });
 
         return NextResponse.json({

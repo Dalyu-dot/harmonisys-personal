@@ -108,7 +108,7 @@ export async function GET() {
 
             isAdmin
                 ? prisma.incident.groupBy({
-                      by: ['category', 'severity'],
+                      by: ['category'],
                       _count: { category: true },
                   })
                 : Promise.resolve([]),
@@ -158,13 +158,7 @@ export async function GET() {
                   }, {} as Record<string, number>)
                 : {};
 
-        const incidentsBySeverity =
-            isAdmin && incidentStats.status === 'fulfilled'
-                ? incidentStats.value.reduce((acc, item) => {
-                      acc[item.severity] = item._count.category;
-                      return acc;
-                  }, {} as Record<string, number>)
-                : {};
+      
 
         const unahonByType =
             isAdmin && unahonStats.status === 'fulfilled'
@@ -226,7 +220,6 @@ export async function GET() {
                 location: true,
                 summary: true,
                 category: true,
-                severity: true,
                 createdAt: true,
                 reporter: true,
                 otherCategoryDetail: true,
@@ -276,7 +269,7 @@ export async function GET() {
             breakdown: {
                 usersByRole,
                 incidentsByCategory,
-                incidentsBySeverity,
+              
                 unahonByType,
             },
             topResponders: topRespondersWithNames,
@@ -284,13 +277,10 @@ export async function GET() {
                 tool: 'IRS',
                 action:
                     incident.category.toLowerCase() === 'other'
-                        ? `New ${incident.otherCategoryDetail?.toLowerCase() || 'incident'} in ${incident.location}`
-                        : `New ${incident.severity
-                              .toLowerCase()
-                              .replace(/_/g, ' ')} incident in ${incident.location}`,
+                        && `New ${incident.otherCategoryDetail?.toLowerCase() || 'incident'} in ${incident.location}`,
+                      
                 timestamp: incident.createdAt.toISOString(),
                 user: incident.reporter || 'Anonymous',
-                severity: incident.severity,
             })),
             system: {
                 lastUpdated: new Date().toISOString(),

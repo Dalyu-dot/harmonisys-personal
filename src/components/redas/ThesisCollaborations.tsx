@@ -27,22 +27,28 @@ const ThesisCollaborations = () => {
                 <div className="text-center text-red-500">{error}</div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {collaborations.map((collab, index) => (
-                        <div
-                            key={index}
-                            className="bg-white/85 backdrop-blur-sm p-4 rounded-xl border border-blue-100 space-y-2 hover:shadow-md transition-all duration-300 hover:bg-white/95"
-                        >
-                            <p className="font-semibold text-blue-900 text-sm">
-                                {collab.school}
-                            </p>
-                            <p className="text-xs text-sky-700">
-                                {collab.department}
-                            </p>
-                            <p className="text-xs text-slate-600">
-                                {collab.degreeCourse}
-                            </p>
+                    {collaborations.length > 1 ? (
+                        collaborations.map((collab, index) => (
+                            <div
+                                key={index}
+                                className="bg-white/85 backdrop-blur-sm p-4 rounded-xl border border-blue-100 space-y-2 hover:shadow-md transition-all duration-300 hover:bg-white/95"
+                            >
+                                <p className="font-semibold text-blue-900 text-sm">
+                                    {collab.school}
+                                </p>
+                                <p className="text-xs text-sky-700">
+                                    {collab.department}
+                                </p>
+                                <p className="text-xs text-slate-600">
+                                    {collab.degreeCourse}
+                                </p>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="text-center text-slate-500 col-span-full">
+                            No collaborations found.
                         </div>
-                    ))}
+                    )}
                 </div>
             )}
         </div>

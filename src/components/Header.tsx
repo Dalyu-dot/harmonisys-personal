@@ -60,6 +60,7 @@ import {
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import RoleRequestModal from './users/Rolerequestmodal';
+import NotificationBell from './misalud/notification/NotificationBell';
 
 interface HeaderProps {
     session: Session | null;
@@ -425,6 +426,7 @@ const Header: React.FC<HeaderProps> = ({ session }) => {
                             </nav>
 
                             <div className="flex items-center space-x-2">
+                                {session?.user && <NotificationBell />}
                                 {session?.user ? (
                                     <Dropdown placement="bottom-end">
                                         <DropdownTrigger>

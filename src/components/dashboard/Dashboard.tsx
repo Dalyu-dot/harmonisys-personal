@@ -282,23 +282,23 @@ interface DashboardProps {
 const Dashboard: React.FC<DashboardProps> = ({ session }) => {
     const router = useRouter();
     const { isOpen, onOpenChange, onOpen } = useDisclosure();
-    const {
-        data: stats = null,
-        isPending: loading,
-    } = useQuery<DashboardStats | null>({
-        queryKey: ['dashboard-stats'],
-        queryFn: async () => {
-            const response = await fetch('/api/dashboard/stats');
-            const result = await response.json();
+    const { data: stats = null, isPending: loading } =
+        useQuery<DashboardStats | null>({
+            queryKey: ['dashboard-stats'],
+            queryFn: async () => {
+                const response = await fetch('/api/dashboard/stats');
+                const result = await response.json();
 
-            if (!result.success) {
-                throw new Error(result.error || 'Failed to fetch dashboard stats');
-            }
+                if (!result.success) {
+                    throw new Error(
+                        result.error || 'Failed to fetch dashboard stats'
+                    );
+                }
 
-            return result.data;
-        },
-        staleTime: 2 * 60 * 1000,
-    });
+                return result.data;
+            },
+            staleTime: 2 * 60 * 1000,
+        });
 
     const [selectedTab, setSelectedTab] = useState('overview');
     const [avatarError, setAvatarError] = useState(false);
@@ -312,16 +312,16 @@ const Dashboard: React.FC<DashboardProps> = ({ session }) => {
     const isResponder = role === UserType.RESPONDER;
     const isStandard = role === UserType.STANDARD;
 
-    const {
-        data: chartsData = null,
-    } = useQuery<DashboardChartsData | null>({
+    const { data: chartsData = null } = useQuery<DashboardChartsData | null>({
         queryKey: ['dashboard-charts'],
         queryFn: async () => {
             const response = await fetch('/api/dashboard/charts');
             const result = await response.json();
 
             if (!result.success) {
-                throw new Error(result.error || 'Failed to fetch dashboard charts');
+                throw new Error(
+                    result.error || 'Failed to fetch dashboard charts'
+                );
             }
 
             return result.data;
@@ -348,26 +348,29 @@ const Dashboard: React.FC<DashboardProps> = ({ session }) => {
 
         const geoTimer = setTimeout(() => {
             navigator.geolocation.getCurrentPosition(
-            (position) => {
-                const locationData = {
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude,
-                    timestamp: Date.now(),
-                };
+                (position) => {
+                    const locationData = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude,
+                        timestamp: Date.now(),
+                    };
 
-                localStorage.setItem('userLocation', JSON.stringify(locationData));
-                localStorage.setItem('locationPromptShown', 'true');
-            },
-            (error) => {
-                console.error('Error getting location:', error);
-                localStorage.setItem('locationPromptShown', 'true');
-            },
-            {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 300000,
-            }
-        );
+                    localStorage.setItem(
+                        'userLocation',
+                        JSON.stringify(locationData)
+                    );
+                    localStorage.setItem('locationPromptShown', 'true');
+                },
+                (error) => {
+                    console.error('Error getting location:', error);
+                    localStorage.setItem('locationPromptShown', 'true');
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 300000,
+                }
+            );
         }, 1200);
         return () => clearTimeout(geoTimer);
     }, [isResponder, isAdmin]);
@@ -597,143 +600,142 @@ const Dashboard: React.FC<DashboardProps> = ({ session }) => {
             return false;
         }) || [];
 
-    
-        const responderMetrics: MetricCardProps[] = [
-    {
-        title: 'Total Incidents',
-        value: stats?.overview.totalIncidents || 0,
-        subtitle: 'Submitted reports',
-        icon: <AlertTriangle className="w-7 h-7 text-white" />,
-        color: "bg-gradient-to-br from-[#7A0000] via-[#900000] to-[#A50000]",
-        cardBg: 'bg-gradient-to-br from-[#B0122B]/8 via-[#B0122B]/4 to-white',
-        cardBorder: 'border border-[#B0122B]/20',
-        subtitleBg: 'bg-[#B0122B]/8 border border-[#B0122B]/18',
-        subtitleText: 'text-[#8E1023]',
-    },
-    {
-        title: 'Mi Salud Records',
-        value: stats?.overview.totalQuestionnaires || 0,
-        subtitle: 'Health Assessments',
-        icon: <Heart className="w-7 h-7 text-white" />,
-        color: "bg-gradient-to-br from-[#900000] via-[#B00000] to-[#C40000]",
-        cardBg: 'bg-gradient-to-br from-[#7A0C1E]/8 via-[#7A0C1E]/4 to-white',
-        cardBorder: 'border border-[#7A0C1E]/20',
-        subtitleBg: 'bg-[#7A0C1E]/8 border border-[#7A0C1E]/18',
-        subtitleText: 'text-[#66101E]',
-    },
-    {
-        title: 'Unahon Records',
-        value: stats?.overview.totalUnahonAssessments || 0,
-        subtitle: 'Submitted Assessments',
-        icon: <ShieldCheck className="w-7 h-7 text-white" />,
-        color: "bg-gradient-to-br from-[#B00000] via-[#D00000] to-[#E00000]",
-        cardBg: 'bg-gradient-to-br from-[#6B0F25]/8 via-[#6B0F25]/4 to-white',
-        cardBorder: 'border border-[#6B0F25]/20',
-        subtitleBg: 'bg-[#6B0F25]/8 border border-[#6B0F25]/18',
-        subtitleText: 'text-[#5A1023]',
-    },
-    {
-        title: 'Recent Activity',
-        value: myRecentActivities.length
-            ? formatTimeAgo(myRecentActivities[0].timestamp)
-            : '—',
-        subtitle: 'Latest action',
-        icon: <Clock className="w-7 h-7 text-white" />,
-        color: "bg-gradient-to-br from-[#D00000] via-[#F00000] to-[#FF0000]",
-        cardBg: 'bg-gradient-to-br from-[#5B0A0A]/8 via-[#5B0A0A]/4 to-white',
-        cardBorder: 'border border-[#5B0A0A]/20',
-        subtitleBg: 'bg-[#5B0A0A]/8 border border-[#5B0A0A]/18',
-        subtitleText: 'text-[#5B0A0A]',
-    },
-];
-    
+    const responderMetrics: MetricCardProps[] = [
+        {
+            title: 'Total Incidents',
+            value: stats?.overview.totalIncidents || 0,
+            subtitle: 'Submitted reports',
+            icon: <AlertTriangle className="w-7 h-7 text-white" />,
+            color: 'bg-gradient-to-br from-[#7A0000] via-[#900000] to-[#A50000]',
+            cardBg: 'bg-gradient-to-br from-[#B0122B]/8 via-[#B0122B]/4 to-white',
+            cardBorder: 'border border-[#B0122B]/20',
+            subtitleBg: 'bg-[#B0122B]/8 border border-[#B0122B]/18',
+            subtitleText: 'text-[#8E1023]',
+        },
+        {
+            title: 'Mi Salud Records',
+            value: stats?.overview.totalQuestionnaires || 0,
+            subtitle: 'Health Assessments',
+            icon: <Heart className="w-7 h-7 text-white" />,
+            color: 'bg-gradient-to-br from-[#900000] via-[#B00000] to-[#C40000]',
+            cardBg: 'bg-gradient-to-br from-[#7A0C1E]/8 via-[#7A0C1E]/4 to-white',
+            cardBorder: 'border border-[#7A0C1E]/20',
+            subtitleBg: 'bg-[#7A0C1E]/8 border border-[#7A0C1E]/18',
+            subtitleText: 'text-[#66101E]',
+        },
+        {
+            title: 'Unahon Records',
+            value: stats?.overview.totalUnahonAssessments || 0,
+            subtitle: 'Submitted Assessments',
+            icon: <ShieldCheck className="w-7 h-7 text-white" />,
+            color: 'bg-gradient-to-br from-[#B00000] via-[#D00000] to-[#E00000]',
+            cardBg: 'bg-gradient-to-br from-[#6B0F25]/8 via-[#6B0F25]/4 to-white',
+            cardBorder: 'border border-[#6B0F25]/20',
+            subtitleBg: 'bg-[#6B0F25]/8 border border-[#6B0F25]/18',
+            subtitleText: 'text-[#5A1023]',
+        },
+        {
+            title: 'Recent Activity',
+            value: myRecentActivities.length
+                ? formatTimeAgo(myRecentActivities[0].timestamp)
+                : '—',
+            subtitle: 'Latest action',
+            icon: <Clock className="w-7 h-7 text-white" />,
+            color: 'bg-gradient-to-br from-[#D00000] via-[#F00000] to-[#FF0000]',
+            cardBg: 'bg-gradient-to-br from-[#5B0A0A]/8 via-[#5B0A0A]/4 to-white',
+            cardBorder: 'border border-[#5B0A0A]/20',
+            subtitleBg: 'bg-[#5B0A0A]/8 border border-[#5B0A0A]/18',
+            subtitleText: 'text-[#5B0A0A]',
+        },
+    ];
+
     const standardMetrics: MetricCardProps[] = [
-    {
-        title: 'Total Incidents',
-        value: stats?.overview.totalIncidents || 0,
-        subtitle: 'Submitted reports',
-        icon: <AlertTriangle className="w-7 h-7 text-white" />,
-        color: 'bg-gradient-to-br from-[#B0122B] via-[#C4162F] to-[#D62839]',
-        cardBg: 'bg-gradient-to-br from-[#B0122B]/8 via-[#B0122B]/4 to-white',
-        cardBorder: 'border border-[#B0122B]/20',
-        subtitleBg: 'bg-[#B0122B]/8 border border-[#B0122B]/18',
-        subtitleText: 'text-[#8E1023]',
-    },
-    
-    {
-        title: 'Recent Activity',
-        value: myRecentActivities.length
-            ? formatTimeAgo(myRecentActivities[0].timestamp)
-            : '—',
-        subtitle: 'Latest action',
-        icon: <Clock className="w-7 h-7 text-white" />,
-        color: 'bg-gradient-to-br from-[#5B0A0A] via-[#741010] to-[#8E1717]',
-        cardBg: 'bg-gradient-to-br from-[#5B0A0A]/8 via-[#5B0A0A]/4 to-white',
-        cardBorder: 'border border-[#5B0A0A]/20',
-        subtitleBg: 'bg-[#5B0A0A]/8 border border-[#5B0A0A]/18',
-        subtitleText: 'text-[#5B0A0A]',
-    },
-];
+        {
+            title: 'Total Incidents',
+            value: stats?.overview.totalIncidents || 0,
+            subtitle: 'Submitted reports',
+            icon: <AlertTriangle className="w-7 h-7 text-white" />,
+            color: 'bg-gradient-to-br from-[#B0122B] via-[#C4162F] to-[#D62839]',
+            cardBg: 'bg-gradient-to-br from-[#B0122B]/8 via-[#B0122B]/4 to-white',
+            cardBorder: 'border border-[#B0122B]/20',
+            subtitleBg: 'bg-[#B0122B]/8 border border-[#B0122B]/18',
+            subtitleText: 'text-[#8E1023]',
+        },
 
-   const adminMetrics = (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <MetricCard
-            title="Total Users"
-            value={stats?.overview.totalUsers || 0}
-            subtitle="Active users"
-            icon={<Users className="w-7 h-7 text-white" />}
-            color="bg-gradient-to-br from-[#7A0000] via-[#900000] to-[#A50000]"
-            cardBg="bg-gradient-to-br from-[#8B1538]/8 via-[#8B1538]/4 to-white"
-            cardBorder="border border-[#8B1538]/20"
-            subtitleBg="bg-[#8B1538]/8 border border-[#8B1538]/18"
-            subtitleText="text-[#6B0F25]"
-            loading={loading}
-            href="/users"
-        />
+        {
+            title: 'Recent Activity',
+            value: myRecentActivities.length
+                ? formatTimeAgo(myRecentActivities[0].timestamp)
+                : '—',
+            subtitle: 'Latest action',
+            icon: <Clock className="w-7 h-7 text-white" />,
+            color: 'bg-gradient-to-br from-[#5B0A0A] via-[#741010] to-[#8E1717]',
+            cardBg: 'bg-gradient-to-br from-[#5B0A0A]/8 via-[#5B0A0A]/4 to-white',
+            cardBorder: 'border border-[#5B0A0A]/20',
+            subtitleBg: 'bg-[#5B0A0A]/8 border border-[#5B0A0A]/18',
+            subtitleText: 'text-[#5B0A0A]',
+        },
+    ];
 
-        <MetricCard
-            title="Total Incidents"
-            value={stats?.overview.totalIncidents || 0}
-            subtitle="Recorded incidents"
-            icon={<AlertTriangle className="w-7 h-7 text-white" />}
-            color="bg-gradient-to-br from-[#900000] via-[#B00000] to-[#C40000]"
-            cardBg="bg-gradient-to-br from-[#B0122B]/8 via-[#B0122B]/4 to-white"
-            cardBorder="border border-[#B0122B]/20"
-            subtitleBg="bg-[#B0122B]/8 border border-[#B0122B]/18"
-            subtitleText="text-[#8E1023]"
-            loading={loading}
-            href="/irs/incidents/manage"
-        />
+    const adminMetrics = (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <MetricCard
+                title="Total Users"
+                value={stats?.overview.totalUsers || 0}
+                subtitle="Active users"
+                icon={<Users className="w-7 h-7 text-white" />}
+                color="bg-gradient-to-br from-[#7A0000] via-[#900000] to-[#A50000]"
+                cardBg="bg-gradient-to-br from-[#8B1538]/8 via-[#8B1538]/4 to-white"
+                cardBorder="border border-[#8B1538]/20"
+                subtitleBg="bg-[#8B1538]/8 border border-[#8B1538]/18"
+                subtitleText="text-[#6B0F25]"
+                loading={loading}
+                href="/users"
+            />
 
-        <MetricCard
-            title="Mi Salud Records"
-            value={stats?.overview.totalQuestionnaires || 0}
-            subtitle="Health assessments"
-            icon={<Heart className="w-7 h-7 text-white" />}
-            color="bg-gradient-to-br from-[#B00000] via-[#D00000] to-[#E00000]"
-            cardBg="bg-gradient-to-br from-[#7A0C1E]/8 via-[#7A0C1E]/4 to-white"
-            cardBorder="border border-[#7A0C1E]/20"
-            subtitleBg="bg-[#7A0C1E]/8 border border-[#7A0C1E]/18"
-            subtitleText="text-[#66101E]"
-            loading={loading}
-            href="/misalud/manage"
-        />
+            <MetricCard
+                title="Total Incidents"
+                value={stats?.overview.totalIncidents || 0}
+                subtitle="Recorded incidents"
+                icon={<AlertTriangle className="w-7 h-7 text-white" />}
+                color="bg-gradient-to-br from-[#900000] via-[#B00000] to-[#C40000]"
+                cardBg="bg-gradient-to-br from-[#B0122B]/8 via-[#B0122B]/4 to-white"
+                cardBorder="border border-[#B0122B]/20"
+                subtitleBg="bg-[#B0122B]/8 border border-[#B0122B]/18"
+                subtitleText="text-[#8E1023]"
+                loading={loading}
+                href="/irs/incidents/manage"
+            />
 
-        <MetricCard
-            title="Unahon records"
-            value={stats?.overview.totalUnahonAssessments || 0}
-            subtitle="Submitted assessments"
-            icon={<ShieldCheck className="w-7 h-7 text-white" />}
-            color="bg-gradient-to-br from-[#D00000] via-[#F00000] to-[#FF0000]"
-            cardBg="bg-gradient-to-br from-[#6B0F25]/8 via-[#6B0F25]/4 to-white"
-            cardBorder="border border-[#6B0F25]/20"
-            subtitleBg="bg-[#6B0F25]/8 border border-[#6B0F25]/18"
-            subtitleText="text-[#5A1023]"
-            loading={loading}
-            href="/unahon/manage"
-        />
-    </div>
-);
+            <MetricCard
+                title="Mi Salud Records"
+                value={stats?.overview.totalQuestionnaires || 0}
+                subtitle="Health assessments"
+                icon={<Heart className="w-7 h-7 text-white" />}
+                color="bg-gradient-to-br from-[#B00000] via-[#D00000] to-[#E00000]"
+                cardBg="bg-gradient-to-br from-[#7A0C1E]/8 via-[#7A0C1E]/4 to-white"
+                cardBorder="border border-[#7A0C1E]/20"
+                subtitleBg="bg-[#7A0C1E]/8 border border-[#7A0C1E]/18"
+                subtitleText="text-[#66101E]"
+                loading={loading}
+                href="/misalud/manage"
+            />
+
+            <MetricCard
+                title="Unahon records"
+                value={stats?.overview.totalUnahonAssessments || 0}
+                subtitle="Submitted assessments"
+                icon={<ShieldCheck className="w-7 h-7 text-white" />}
+                color="bg-gradient-to-br from-[#D00000] via-[#F00000] to-[#FF0000]"
+                cardBg="bg-gradient-to-br from-[#6B0F25]/8 via-[#6B0F25]/4 to-white"
+                cardBorder="border border-[#6B0F25]/20"
+                subtitleBg="bg-[#6B0F25]/8 border border-[#6B0F25]/18"
+                subtitleText="text-[#5A1023]"
+                loading={loading}
+                href="/unahon/manage"
+            />
+        </div>
+    );
 
     const activitiesToShow =
         (isPersonalDashboard ? myRecentActivities : stats?.recentActivities) ||
@@ -791,18 +793,26 @@ const Dashboard: React.FC<DashboardProps> = ({ session }) => {
                                 <div className="flex items-center gap-4 lg:gap-5">
                                     <div className="relative shrink-0">
                                         <div className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border border-white/20 bg-white/10 shadow-lg backdrop-blur-sm">
-                                            {!avatarError && session?.user?.image ? (
+                                            {!avatarError &&
+                                            session?.user?.image ? (
                                                 <Image
                                                     src={session.user.image}
-                                                    alt={session?.user?.name || 'User avatar'}
+                                                    alt={
+                                                        session?.user?.name ||
+                                                        'User avatar'
+                                                    }
                                                     fill
                                                     sizes="64px"
                                                     className="object-cover"
-                                                    onError={() => setAvatarError(true)}
+                                                    onError={() =>
+                                                        setAvatarError(true)
+                                                    }
                                                 />
                                             ) : (
                                                 <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-white/20 to-white/5 text-lg font-extrabold text-white">
-                                                    {getInitials(session?.user?.name)}
+                                                    {getInitials(
+                                                        session?.user?.name
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
@@ -812,11 +822,18 @@ const Dashboard: React.FC<DashboardProps> = ({ session }) => {
 
                                     <div className="min-w-0">
                                         <h1 className="text-3xl lg:text-5xl font-black text-white leading-tight tracking-[-0.02em]">
-                                            {getGreeting()}, {(session?.user?.name || 'User').split(' ')[0]}!
+                                            {getGreeting()},{' '}
+                                            {
+                                                (
+                                                    session?.user?.name ||
+                                                    'User'
+                                                ).split(' ')[0]
+                                            }
+                                            !
                                         </h1>
 
                                         <p className="text-white/85 text-lg mt-1">
-                                            Welcome to your DRRM Dashboard
+                                            Welcome to your DRRM-H Dashboard
                                         </p>
                                     </div>
                                 </div>
@@ -826,7 +843,9 @@ const Dashboard: React.FC<DashboardProps> = ({ session }) => {
                                 <Button
                                     className="font-bold bg-white text-[#7A1111] hover:bg-rose-50 min-w-[180px] h-12 px-6 rounded-[18px] shadow-lg transition-all duration-300 hover:-translate-y-0.5"
                                     size="lg"
-                                    startContent={<Lightbulb className="w-5 h-5 text-[#7A0C1E]" />}
+                                    startContent={
+                                        <Lightbulb className="w-5 h-5 text-[#7A0C1E]" />
+                                    }
                                     onPress={onOpen}
                                 >
                                     Quick Actions
@@ -840,22 +859,26 @@ const Dashboard: React.FC<DashboardProps> = ({ session }) => {
                 {isAdmin ? (
                     adminMetrics
                 ) : (
-                    <div className={`grid grid-cols-1 sm:grid-cols-2 ${metricsGridCols} gap-6 mb-8`}>
-                        {(isResponder ? responderMetrics : standardMetrics).map((m, idx) => (
-                            <MetricCard
-                                key={idx}
-                                title={m.title}
-                                value={m.value}
-                                subtitle={m.subtitle}
-                                icon={m.icon}
-                                color={m.color}
-                                cardBg={m.cardBg}
-                                cardBorder={m.cardBorder}
-                                subtitleBg={m.subtitleBg}
-                                subtitleText={m.subtitleText}
-                                loading={loading}
-                            />
-                        ))}
+                    <div
+                        className={`grid grid-cols-1 sm:grid-cols-2 ${metricsGridCols} gap-6 mb-8`}
+                    >
+                        {(isResponder ? responderMetrics : standardMetrics).map(
+                            (m, idx) => (
+                                <MetricCard
+                                    key={idx}
+                                    title={m.title}
+                                    value={m.value}
+                                    subtitle={m.subtitle}
+                                    icon={m.icon}
+                                    color={m.color}
+                                    cardBg={m.cardBg}
+                                    cardBorder={m.cardBorder}
+                                    subtitleBg={m.subtitleBg}
+                                    subtitleText={m.subtitleText}
+                                    loading={loading}
+                                />
+                            )
+                        )}
                     </div>
                 )}
 
@@ -863,7 +886,9 @@ const Dashboard: React.FC<DashboardProps> = ({ session }) => {
                 {!isStandard && (
                     <Tabs
                         selectedKey={selectedTab}
-                        onSelectionChange={(key) => setSelectedTab(key as string)}
+                        onSelectionChange={(key) =>
+                            setSelectedTab(key as string)
+                        }
                         className="mb-8"
                         classNames={{
                             tabList:
@@ -871,8 +896,7 @@ const Dashboard: React.FC<DashboardProps> = ({ session }) => {
                             tab: 'font-semibold text-slate-700 data-[selected=true]:text-white',
                             tabContent:
                                 'group-data-[selected=true]:text-white group-data-[hover=true]:text-slate-900',
-                            cursor:
-                                'bg-gradient-to-r from-[#7A0C1E] to-[#B91C1C] shadow-lg',
+                            cursor: 'bg-gradient-to-r from-[#7A0C1E] to-[#B91C1C] shadow-lg',
                             panel: 'pt-4',
                         }}
                     >
@@ -881,7 +905,9 @@ const Dashboard: React.FC<DashboardProps> = ({ session }) => {
                             title={
                                 <div className="flex items-center gap-2 px-2">
                                     <BarChart3 className="w-5 h-5" />
-                                    <span className="hidden sm:inline">Overview</span>
+                                    <span className="hidden sm:inline">
+                                        Overview
+                                    </span>
                                 </div>
                             }
                         >
@@ -896,7 +922,11 @@ const Dashboard: React.FC<DashboardProps> = ({ session }) => {
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                                         {tools.map((tool, index) => (
-                                            <ToolCard key={index} {...tool} loading={loading} />
+                                            <ToolCard
+                                                key={index}
+                                                {...tool}
+                                                loading={loading}
+                                            />
                                         ))}
                                     </div>
                                 </div>
@@ -916,10 +946,12 @@ const Dashboard: React.FC<DashboardProps> = ({ session }) => {
                                     <CardBody className="px-6 pb-6">
                                         <div className="space-y-4">
                                             {activitiesToShow.length ? (
-                                                activitiesToShow.slice(0, 5).map((activity, index) => (
-                                                    <div
-                                                        key={index}
-                                                        className="
+                                                activitiesToShow
+                                                    .slice(0, 5)
+                                                    .map((activity, index) => (
+                                                        <div
+                                                            key={index}
+                                                            className="
                                                             group relative flex items-center gap-4
                                                             rounded-2xl border border-rose-200/70
                                                             bg-gradient-to-r from-[#B0122B]/[0.04] via-white to-white
@@ -929,38 +961,49 @@ const Dashboard: React.FC<DashboardProps> = ({ session }) => {
                                                             hover:shadow-lg
                                                             hover:border-[#B0122B]/25
                                                         "
-                                                    >
-                                                        <div className="absolute left-0 top-4 bottom-4 w-1 rounded-full bg-gradient-to-b from-[#7A0C1E] to-[#B91C1C] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                                        >
+                                                            <div className="absolute left-0 top-4 bottom-4 w-1 rounded-full bg-gradient-to-b from-[#7A0C1E] to-[#B91C1C] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-                                                        <div className="shrink-0 p-3 rounded-2xl bg-gradient-to-br from-[#FBE4E8] to-[#F6D4DA] shadow-sm border border-rose-100">
-                                                            <Clock className="w-5 h-5 text-[#B0122B]" />
-                                                        </div>
+                                                            <div className="shrink-0 p-3 rounded-2xl bg-gradient-to-br from-[#FBE4E8] to-[#F6D4DA] shadow-sm border border-rose-100">
+                                                                <Clock className="w-5 h-5 text-[#B0122B]" />
+                                                            </div>
 
-                                                        <div className="flex-1 min-w-0">
-                                                            <p className="font-bold text-slate-900 text-[15px] sm:text-[16px] leading-snug">
-                                                                {activity.action}
-                                                            </p>
-                                                            <p className="text-sm text-slate-600 mt-1 truncate">
-                                                                <span className="font-medium text-[#7A0C1E]">
-                                                                    {activity.tool}
-                                                                </span>{' '}
-                                                                • {activity.user}
-                                                            </p>
-                                                        </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="font-bold text-slate-900 text-[15px] sm:text-[16px] leading-snug">
+                                                                    {
+                                                                        activity.action
+                                                                    }
+                                                                </p>
+                                                                <p className="text-sm text-slate-600 mt-1 truncate">
+                                                                    <span className="font-medium text-[#7A0C1E]">
+                                                                        {
+                                                                            activity.tool
+                                                                        }
+                                                                    </span>{' '}
+                                                                    •{' '}
+                                                                    {
+                                                                        activity.user
+                                                                    }
+                                                                </p>
+                                                            </div>
 
-                                                        <div className="shrink-0">
-                                                            <div className="px-3 py-1.5 rounded-full bg-[#B0122B]/8 border border-[#B0122B]/12 text-[13px] font-semibold text-[#7A0C1E] whitespace-nowrap">
-                                                                {formatTimeAgo(activity.timestamp)}
+                                                            <div className="shrink-0">
+                                                                <div className="px-3 py-1.5 rounded-full bg-[#B0122B]/8 border border-[#B0122B]/12 text-[13px] font-semibold text-[#7A0C1E] whitespace-nowrap">
+                                                                    {formatTimeAgo(
+                                                                        activity.timestamp
+                                                                    )}
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                ))
+                                                    ))
                                             ) : (
                                                 <div className="text-center py-10 text-slate-500">
                                                     <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#FBE4E8] to-[#F6D4DA]">
                                                         <Clock className="w-7 h-7 text-[#B0122B]" />
                                                     </div>
-                                                    <p className="font-medium">No recent activities</p>
+                                                    <p className="font-medium">
+                                                        No recent activities
+                                                    </p>
                                                 </div>
                                             )}
                                         </div>
@@ -975,7 +1018,9 @@ const Dashboard: React.FC<DashboardProps> = ({ session }) => {
                                 title={
                                     <div className="flex items-center gap-2 px-2">
                                         <PieChart className="w-5 h-5" />
-                                        <span className="hidden sm:inline">Analytics</span>
+                                        <span className="hidden sm:inline">
+                                            Analytics
+                                        </span>
                                     </div>
                                 }
                             >
@@ -1000,10 +1045,12 @@ const Dashboard: React.FC<DashboardProps> = ({ session }) => {
                         <CardBody className="px-6 pb-6">
                             <div className="space-y-4">
                                 {activitiesToShow.length ? (
-                                    activitiesToShow.slice(0, 5).map((activity, index) => (
-                                        <div
-                                            key={index}
-                                            className="
+                                    activitiesToShow
+                                        .slice(0, 5)
+                                        .map((activity, index) => (
+                                            <div
+                                                key={index}
+                                                className="
                                                 group relative flex items-center gap-4
                                                 rounded-2xl border border-rose-200/70
                                                 bg-gradient-to-r from-[#B0122B]/[0.04] via-white to-white
@@ -1013,38 +1060,42 @@ const Dashboard: React.FC<DashboardProps> = ({ session }) => {
                                                 hover:shadow-lg
                                                 hover:border-[#B0122B]/25
                                             "
-                                        >
-                                            <div className="absolute left-0 top-4 bottom-4 w-1 rounded-full bg-gradient-to-b from-[#7A0C1E] to-[#B91C1C] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                            >
+                                                <div className="absolute left-0 top-4 bottom-4 w-1 rounded-full bg-gradient-to-b from-[#7A0C1E] to-[#B91C1C] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-                                            <div className="shrink-0 p-3 rounded-2xl bg-gradient-to-br from-[#FBE4E8] to-[#F6D4DA] shadow-sm border border-rose-100">
-                                                <Clock className="w-5 h-5 text-[#B0122B]" />
-                                            </div>
+                                                <div className="shrink-0 p-3 rounded-2xl bg-gradient-to-br from-[#FBE4E8] to-[#F6D4DA] shadow-sm border border-rose-100">
+                                                    <Clock className="w-5 h-5 text-[#B0122B]" />
+                                                </div>
 
-                                            <div className="flex-1 min-w-0">
-                                                <p className="font-bold text-slate-900 text-[15px] sm:text-[16px] leading-snug">
-                                                    {activity.action}
-                                                </p>
-                                                <p className="text-sm text-slate-600 mt-1 truncate">
-                                                    <span className="font-medium text-[#7A0C1E]">
-                                                        {activity.tool}
-                                                    </span>{' '}
-                                                    • {activity.user}
-                                                </p>
-                                            </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-bold text-slate-900 text-[15px] sm:text-[16px] leading-snug">
+                                                        {activity.action}
+                                                    </p>
+                                                    <p className="text-sm text-slate-600 mt-1 truncate">
+                                                        <span className="font-medium text-[#7A0C1E]">
+                                                            {activity.tool}
+                                                        </span>{' '}
+                                                        • {activity.user}
+                                                    </p>
+                                                </div>
 
-                                            <div className="shrink-0">
-                                                <div className="px-3 py-1.5 rounded-full bg-[#B0122B]/8 border border-[#B0122B]/12 text-[13px] font-semibold text-[#7A0C1E] whitespace-nowrap">
-                                                    {formatTimeAgo(activity.timestamp)}
+                                                <div className="shrink-0">
+                                                    <div className="px-3 py-1.5 rounded-full bg-[#B0122B]/8 border border-[#B0122B]/12 text-[13px] font-semibold text-[#7A0C1E] whitespace-nowrap">
+                                                        {formatTimeAgo(
+                                                            activity.timestamp
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    ))
+                                        ))
                                 ) : (
                                     <div className="text-center py-10 text-slate-500">
                                         <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#FBE4E8] to-[#F6D4DA]">
                                             <Clock className="w-7 h-7 text-[#B0122B]" />
                                         </div>
-                                        <p className="font-medium">No recent activities</p>
+                                        <p className="font-medium">
+                                            No recent activities
+                                        </p>
                                     </div>
                                 )}
                             </div>
@@ -1084,13 +1135,16 @@ const Dashboard: React.FC<DashboardProps> = ({ session }) => {
                             {!showResponderTools ? (
                                 <div className="space-y-4">
                                     <p className="text-slate-600 text-base">
-                                        You’ve been idle for a while. Do you want quick access to responder tools?
+                                        You’ve been idle for a while. Do you
+                                        want quick access to responder tools?
                                     </p>
 
                                     <div className="flex flex-col sm:flex-row gap-3">
                                         <Button
                                             className="bg-gradient-to-r from-[#7A0C1E] to-[#B91C1C] text-white font-bold"
-                                            onPress={() => setShowResponderTools(true)}
+                                            onPress={() =>
+                                                setShowResponderTools(true)
+                                            }
                                         >
                                             Yes
                                         </Button>
@@ -1114,38 +1168,48 @@ const Dashboard: React.FC<DashboardProps> = ({ session }) => {
                                     </p>
 
                                     <div className="grid grid-cols-1 gap-4">
-                                        {responderIdleTools.map((action, index) => (
-                                            <Button
-                                                key={index}
-                                                className={`${action.color} font-bold h-20 text-left transition-all duration-300 transform hover:scale-[1.02]`}
-                                                onPress={() => {
-                                                    router.push(action.href);
-                                                    setIsResponderIdleOpen(false);
-                                                    setShowResponderTools(false);
-                                                }}
-                                                startContent={
-                                                    <div className="p-2 bg-white/20 rounded-lg">
-                                                        {action.icon}
+                                        {responderIdleTools.map(
+                                            (action, index) => (
+                                                <Button
+                                                    key={index}
+                                                    className={`${action.color} font-bold h-20 text-left transition-all duration-300 transform hover:scale-[1.02]`}
+                                                    onPress={() => {
+                                                        router.push(
+                                                            action.href
+                                                        );
+                                                        setIsResponderIdleOpen(
+                                                            false
+                                                        );
+                                                        setShowResponderTools(
+                                                            false
+                                                        );
+                                                    }}
+                                                    startContent={
+                                                        <div className="p-2 bg-white/20 rounded-lg">
+                                                            {action.icon}
+                                                        </div>
+                                                    }
+                                                >
+                                                    <div className="flex flex-col items-start">
+                                                        <div className="font-bold text-lg">
+                                                            {action.title}
+                                                        </div>
+                                                        <div className="text-sm opacity-90 font-normal">
+                                                            {action.description}
+                                                        </div>
                                                     </div>
-                                                }
-                                            >
-                                                <div className="flex flex-col items-start">
-                                                    <div className="font-bold text-lg">
-                                                        {action.title}
-                                                    </div>
-                                                    <div className="text-sm opacity-90 font-normal">
-                                                        {action.description}
-                                                    </div>
-                                                </div>
-                                            </Button>
-                                        ))}
+                                                </Button>
+                                            )
+                                        )}
                                     </div>
 
                                     <div className="pt-2">
                                         <Button
                                             variant="flat"
                                             className="font-semibold"
-                                            onPress={() => setShowResponderTools(false)}
+                                            onPress={() =>
+                                                setShowResponderTools(false)
+                                            }
                                         >
                                             Back
                                         </Button>
@@ -1175,7 +1239,9 @@ const Dashboard: React.FC<DashboardProps> = ({ session }) => {
                                 <div className="p-2 bg-gradient-to-br from-rose-100 to-red-100 rounded-xl">
                                     <Lightbulb className="w-6 h-6 text-rose-700" />
                                 </div>
-                                <h2 className="text-2xl font-black">Quick Actions</h2>
+                                <h2 className="text-2xl font-black">
+                                    Quick Actions
+                                </h2>
                             </div>
                         </ModalHeader>
                         <ModalBody>

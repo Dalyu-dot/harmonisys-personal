@@ -9,7 +9,6 @@ import {
     ModalFooter,
     Button,
     Input,
-    Chip,
 } from '@heroui/react';
 import {
     UserCheck,
@@ -25,16 +24,50 @@ interface RoleRequestModalProps {
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
     session: Session;
-    /** existing pending request (if any) from session or a fresh fetch */
     existingRequest?: {
         id: string;
         status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
         toRole: string;
         createdAt?: string;
     } | null;
-    /** called after a successful submission so the parent can refresh session/state */
     onSuccess?: () => void;
 }
+
+const mhpssOptions = [
+    { value: '1', label: 'Level 1 — Psychosocial Support' },
+    { value: '2', label: 'Level 2 — Basic Psychological First Aid' },
+    { value: '3', label: 'Level 3 — Counseling' },
+    { value: '4', label: 'Level 4 — Clinical / Specialist' },
+] as const;
+
+const statusMeta = {
+    PENDING: {
+        icon: <Clock className="w-4 h-4" />,
+        label: 'Pending Review',
+        wrapperClass: 'bg-amber-50 border-amber-200 text-amber-800',
+        description:
+            'Your request is awaiting admin review. You will be notified by email.',
+    },
+    APPROVED: {
+        icon: <CheckCircle2 className="w-4 h-4" />,
+        label: 'Approved',
+        wrapperClass: 'bg-emerald-50 border-emerald-200 text-emerald-800',
+        description: 'Your request was approved. Your role has been upgraded.',
+    },
+    REJECTED: {
+        icon: <X className="w-4 h-4" />,
+        label: 'Rejected',
+        wrapperClass: 'bg-red-50 border-red-200 text-red-800',
+        description:
+            'Your request was rejected. You may submit a new request below.',
+    },
+    CANCELLED: {
+        icon: <X className="w-4 h-4" />,
+        label: 'Cancelled',
+        wrapperClass: 'bg-slate-50 border-slate-200 text-slate-700',
+        description: 'Your previous request was cancelled.',
+    },
+};
 
 export default function RoleRequestModal({
     isOpen,
@@ -53,46 +86,54 @@ export default function RoleRequestModal({
     const [success, setSuccess] = useState(false);
     const fileRef = useRef<HTMLInputElement>(null);
 
-    const mhpssOptions = [
-        { value: '1', label: 'Level 1 — Psychosocial Support' },
-        { value: '2', label: 'Level 2 — Basic Psychological First Aid' },
-        { value: '3', label: 'Level 3 — Counseling' },
-        { value: '4', label: 'Level 4 — Clinical / Specialist' },
-    ] as const;
+    const wasRejected = existingRequest?.status === 'REJECTED';
+    const showForm = (!existingRequest || wasRejected) && !success;
+
+    const resetState = () => {
+        setOrganization('');
+        setMhpssLevel('');
+        setCertFile(null);
+        setError(null);
+        setSuccess(false);
+        if (fileRef.current) fileRef.current.value = '';
+    };
 
     const handleSubmit = async () => {
         setError(null);
 
         if (!organization.trim()) {
-            setError('Please enter your organization.');
+            setError('Please enter your organization or affiliation.');
+            return;
+        }
+
+        if (!certFile) {
+            setError(
+                'Please upload your certificate or proof of MHPSS Level. This is required.'
+            );
             return;
         }
 
         try {
             setIsSubmitting(true);
 
-            /* ── Upload certificate (if provided) ── */
-            let certUrl: string | null = null;
+            // ── Upload certificate ──────────────────────────────────────────
+            const formData = new FormData();
+            formData.append('file', certFile);
 
-            if (certFile) {
-                const formData = new FormData();
-                formData.append('file', certFile);
+            const uploadRes = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData,
+            });
 
-                const uploadRes = await fetch('/api/upload', {
-                    method: 'POST',
-                    body: formData,
-                });
-
-                if (!uploadRes.ok) {
-                    const j = await uploadRes.json().catch(() => null);
-                    throw new Error(j?.message || 'Certificate upload failed.');
-                }
-
-                const uploadData = await uploadRes.json();
-                certUrl = uploadData.url ?? null;
+            if (!uploadRes.ok) {
+                const j = await uploadRes.json().catch(() => null);
+                throw new Error(j?.message || 'Certificate upload failed.');
             }
 
-            /* ── Submit role-change request ── */
+            const uploadData = await uploadRes.json();
+            const certUrl: string | null = uploadData.url ?? null;
+
+            // ── Submit role-change request ──────────────────────────────────
             const res = await fetch('/api/user/role-request', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -121,68 +162,28 @@ export default function RoleRequestModal({
         }
     };
 
-    /* ── Status badge colours ── */
-    const statusMeta = {
-        PENDING: {
-            color: 'warning' as const,
-            icon: <Clock className="w-4 h-4" />,
-            label: 'Pending Review',
-        },
-        APPROVED: {
-            color: 'success' as const,
-            icon: <CheckCircle2 className="w-4 h-4" />,
-            label: 'Approved',
-        },
-        REJECTED: {
-            color: 'danger' as const,
-            icon: <X className="w-4 h-4" />,
-            label: 'Rejected',
-        },
-        CANCELLED: {
-            color: 'default' as const,
-            icon: <X className="w-4 h-4" />,
-            label: 'Cancelled',
-        },
-    };
-
-    const hasPending = existingRequest?.status === 'PENDING';
-    const wasRejected = existingRequest?.status === 'REJECTED';
-
     return (
         <Modal
             isOpen={isOpen}
             onOpenChange={(open) => {
                 if (isSubmitting) return;
-                if (!open) {
-                    // reset local state on close
-                    setOrganization('');
-                    setMhpssLevel('');
-                    setCertFile(null);
-                    setError(null);
-                    setSuccess(false);
-                }
+                if (!open) resetState();
                 onOpenChange(open);
             }}
             size="lg"
         >
             <ModalContent>
-                {/* ── Header ── */}
+                {/* ── Header ────────────────────────────────────────────────── */}
                 <ModalHeader className="flex items-center gap-2 font-black text-[#4A0707]">
                     <UserCheck className="w-5 h-5" />
                     Request Responder Role
                 </ModalHeader>
 
                 <ModalBody className="space-y-4">
-                    {/* ── Existing request banner ── */}
+                    {/* ── Existing request banner ───────────────────────────── */}
                     {existingRequest && !success && (
                         <div
-                            className={`rounded-2xl p-4 border flex items-start gap-3 ${
-                                existingRequest.status === 'PENDING'
-                                    ? 'bg-amber-50 border-amber-200 text-amber-800'
-                                    : existingRequest.status === 'APPROVED'
-                                      ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-                                      : 'bg-red-50 border-red-200 text-red-800'
-                            }`}
+                            className={`rounded-2xl p-4 border flex items-start gap-3 ${statusMeta[existingRequest.status].wrapperClass}`}
                         >
                             {statusMeta[existingRequest.status].icon}
                             <div className="text-sm">
@@ -190,12 +191,10 @@ export default function RoleRequestModal({
                                     {statusMeta[existingRequest.status].label}
                                 </p>
                                 <p className="opacity-80">
-                                    {existingRequest.status === 'PENDING' &&
-                                        'Your request is awaiting admin review. You will be notified by email.'}
-                                    {existingRequest.status === 'APPROVED' &&
-                                        'Your request was approved. Your role has been upgraded.'}
-                                    {existingRequest.status === 'REJECTED' &&
-                                        'Your request was rejected. You may submit a new request below.'}
+                                    {
+                                        statusMeta[existingRequest.status]
+                                            .description
+                                    }
                                 </p>
                                 {existingRequest.createdAt && (
                                     <p className="opacity-60 text-xs mt-1">
@@ -209,7 +208,7 @@ export default function RoleRequestModal({
                         </div>
                     )}
 
-                    {/* ── Success state ── */}
+                    {/* ── Success state ─────────────────────────────────────── */}
                     {success && (
                         <div className="rounded-2xl p-5 bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-start gap-3">
                             <CheckCircle2 className="w-5 h-5 mt-0.5 shrink-0" />
@@ -229,8 +228,8 @@ export default function RoleRequestModal({
                         </div>
                     )}
 
-                    {/* ── Form (show when no pending request OR was rejected) ── */}
-                    {(!existingRequest || wasRejected) && !success && (
+                    {/* ── Form ──────────────────────────────────────────────── */}
+                    {showForm && (
                         <>
                             <p className="text-sm text-slate-600">
                                 Submit a request to upgrade your account to{' '}
@@ -244,7 +243,7 @@ export default function RoleRequestModal({
                             {/* Organization */}
                             <div className="space-y-1">
                                 <label className="text-xs font-semibold text-slate-700 uppercase tracking-wide">
-                                    Organization{' '}
+                                    Organization / Affiliation{' '}
                                     <span className="text-red-500">*</span>
                                 </label>
                                 <Input
@@ -293,57 +292,132 @@ export default function RoleRequestModal({
                                 </div>
                             </div>
 
-                            {/* Certificate upload (optional) */}
+                            {/* Certificate upload — REQUIRED, mirrors RegisterForm style */}
                             <div className="space-y-1">
                                 <label className="text-xs font-semibold text-slate-700 uppercase tracking-wide">
-                                    MHPSS Certificate{' '}
-                                    <span className="text-slate-400 font-normal normal-case">
-                                        (optional — PDF or image)
-                                    </span>
+                                    MHPSS Certificate / Proof{' '}
+                                    <span className="text-red-500">*</span>
                                 </label>
 
+                                {/* Hidden native file input */}
                                 <input
                                     ref={fileRef}
+                                    id="roleRequestCertFile"
                                     type="file"
-                                    accept=".pdf,image/*"
+                                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
                                     className="hidden"
-                                    onChange={(e) =>
-                                        setCertFile(e.target.files?.[0] ?? null)
-                                    }
+                                    disabled={isSubmitting}
+                                    onChange={(e) => {
+                                        setCertFile(
+                                            e.target.files?.[0] ?? null
+                                        );
+                                        // Clear cert-related error as soon as a file is picked
+                                        if (
+                                            error
+                                                ?.toLowerCase()
+                                                .includes('certificate')
+                                        ) {
+                                            setError(null);
+                                        }
+                                    }}
                                 />
 
-                                {certFile ? (
-                                    <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5">
-                                        <Upload className="w-4 h-4 text-slate-500" />
-                                        <span className="text-sm text-slate-700 truncate flex-1">
-                                            {certFile.name}
-                                        </span>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setCertFile(null);
-                                                if (fileRef.current)
-                                                    fileRef.current.value = '';
-                                            }}
-                                            className="text-slate-400 hover:text-red-500 transition-colors"
+                                {/*
+                                 * Styled label — exact same pattern as RegisterForm.tsx:
+                                 *   <label htmlFor="…"> with Upload icon + filename/placeholder
+                                 *   + a "Choose File" / "Change" CTA on the right.
+                                 * An X button lets the user clear the selection without
+                                 * re-opening the file picker (it stops propagation so the
+                                 * label click doesn't re-trigger the input).
+                                 */}
+                                <label
+                                    htmlFor="roleRequestCertFile"
+                                    className={`
+                                        flex min-h-[52px] w-full cursor-pointer items-center
+                                        justify-between rounded-2xl border px-5
+                                        transition-all duration-200
+                                        ${
+                                            isSubmitting
+                                                ? 'cursor-not-allowed opacity-50 border-slate-200 bg-slate-50'
+                                                : certFile
+                                                  ? 'border-[#A11B1B]/40 bg-[#A11B1B]/5 hover:border-[#A11B1B]/60'
+                                                  : error
+                                                          ?.toLowerCase()
+                                                          .includes(
+                                                              'certificate'
+                                                          )
+                                                    ? 'border-red-400 bg-red-50 hover:border-red-500'
+                                                    : 'border-[#A11B1B]/30 bg-white hover:border-[#A11B1B]/60 hover:bg-[#A11B1B]/5'
+                                        }
+                                    `}
+                                >
+                                    <div className="flex items-center gap-3 overflow-hidden">
+                                        <Upload
+                                            className={`h-5 w-5 shrink-0 ${
+                                                certFile
+                                                    ? 'text-[#7A0C1E]'
+                                                    : error
+                                                            ?.toLowerCase()
+                                                            .includes(
+                                                                'certificate'
+                                                            )
+                                                      ? 'text-red-400'
+                                                      : 'text-slate-400'
+                                            }`}
+                                        />
+                                        <span
+                                            className={`truncate text-sm ${
+                                                certFile
+                                                    ? 'font-medium text-slate-800'
+                                                    : error
+                                                            ?.toLowerCase()
+                                                            .includes(
+                                                                'certificate'
+                                                            )
+                                                      ? 'text-red-400'
+                                                      : 'text-slate-400'
+                                            }`}
                                         >
-                                            <X className="w-4 h-4" />
-                                        </button>
+                                            {certFile
+                                                ? certFile.name
+                                                : 'Upload Certificate / Proof of MHPSS Level'}
+                                        </span>
                                     </div>
-                                ) : (
-                                    <button
-                                        type="button"
-                                        disabled={isSubmitting}
-                                        onClick={() => fileRef.current?.click()}
-                                        className="w-full flex items-center gap-2 justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500 hover:border-[#A11B1B]/40 hover:bg-[#A11B1B]/5 hover:text-[#7A0C1E] transition-all"
-                                    >
-                                        <Upload className="w-4 h-4" />
-                                        Click to upload certificate
-                                    </button>
-                                )}
+
+                                    <div className="ml-4 flex shrink-0 items-center gap-2">
+                                        {certFile && (
+                                            <button
+                                                type="button"
+                                                disabled={isSubmitting}
+                                                onClick={(e) => {
+                                                    // Prevent the label from re-opening the picker
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    setCertFile(null);
+                                                    if (fileRef.current)
+                                                        fileRef.current.value =
+                                                            '';
+                                                }}
+                                                className="rounded-full p-0.5 text-slate-400 hover:text-red-500 transition-colors"
+                                                aria-label="Remove file"
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </button>
+                                        )}
+                                        <span className="text-sm font-semibold text-[#7A0C1E]">
+                                            {certFile
+                                                ? 'Change'
+                                                : 'Choose File'}
+                                        </span>
+                                    </div>
+                                </label>
+
+                                <p className="px-1 text-xs text-slate-400">
+                                    Accepted formats: PDF, JPG, PNG, DOC, DOCX
+                                </p>
                             </div>
 
-                            {/* Error */}
+                            {/* Error banner */}
                             {error && (
                                 <div className="flex items-center gap-2 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
                                     <AlertCircle className="w-4 h-4 shrink-0" />
@@ -354,6 +428,7 @@ export default function RoleRequestModal({
                     )}
                 </ModalBody>
 
+                {/* ── Footer ────────────────────────────────────────────────── */}
                 <ModalFooter>
                     <Button
                         variant="light"
@@ -363,8 +438,7 @@ export default function RoleRequestModal({
                         {success ? 'Close' : 'Cancel'}
                     </Button>
 
-                    {/* Only show submit when form is visible */}
-                    {(!existingRequest || wasRejected) && !success && (
+                    {showForm && (
                         <Button
                             className="bg-gradient-to-r from-[#4A0707] via-[#6B0F0F] to-[#A11B1B] text-white font-semibold"
                             onPress={handleSubmit}

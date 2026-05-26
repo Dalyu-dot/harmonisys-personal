@@ -16,7 +16,6 @@ import {
     AlertTriangle,
     TrendingUp,
     Activity,
-    AlertCircle,
     BarChart3,
     MapPin,
     Target,
@@ -29,13 +28,10 @@ import {
     XAxis,
     YAxis,
     CartesianGrid,
-    Legend,
     Tooltip,
-    PieChart,
-    Pie,
-    Cell,
     LineChart,
     Line,
+    Legend,
 } from 'recharts';
 import { colorTypes, Incident } from '@/types';
 import { parseIncidentDates } from '@/lib/action/irs';
@@ -45,14 +41,9 @@ interface EventPageProps {
     teamDeployed: string;
 }
 
-// Define proper types for chart data
 interface MonthlyIncidentData {
     month: string;
     total: number;
-    critical: number;
-    high: number;
-    medium: number;
-    low: number;
 }
 
 interface TooltipPayload {
@@ -73,13 +64,10 @@ const EventDetailPage = ({ teamDeployed }: EventPageProps) => {
     const [incidentsData, setIncidentsData] = useState<Incident[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // Fetch incidents data
     const fetchIncidentsData = async () => {
         try {
             const response = await fetch('/api/irs/incidents');
-            if (!response.ok) {
-                throw new Error('Failed to fetch incidents data');
-            }
+            if (!response.ok) throw new Error('Failed to fetch incidents data');
             const data = await response.json();
             setIncidentsData(data.map(parseIncidentDates));
         } catch (error) {
@@ -93,31 +81,12 @@ const EventDetailPage = ({ teamDeployed }: EventPageProps) => {
         fetchIncidentsData();
     }, []);
 
-    // Filter incidents for this team
     const teamIncidents = useMemo(() => {
         return incidentsData.filter(
             (incident) => incident.teamDeployed === teamDeployed
         );
     }, [incidentsData, teamDeployed]);
 
-    // Process data for severity chart
-    const severityChartData = useMemo(() => {
-        const severityCount = teamIncidents.reduce(
-            (acc, incident) => {
-                acc[incident.severity] = (acc[incident.severity] || 0) + 1;
-                return acc;
-            },
-            {} as { [key: string]: number }
-        );
-
-        return Object.entries(severityCount).map(([severity, count]) => ({
-            severity,
-            count,
-            percentage: ((count / teamIncidents.length) * 100).toFixed(1),
-        }));
-    }, [teamIncidents]);
-
-    // Process data for category chart
     const categoryChartData = useMemo(() => {
         const categoryCount = teamIncidents.reduce(
             (acc, incident) => {
@@ -137,7 +106,6 @@ const EventDetailPage = ({ teamDeployed }: EventPageProps) => {
         }));
     }, [teamIncidents]);
 
-    // Process data for timeline chart (incidents over time)
     const timelineChartData = useMemo(() => {
         const monthlyData = teamIncidents.reduce(
             (acc, incident) => {
@@ -145,26 +113,10 @@ const EventDetailPage = ({ teamDeployed }: EventPageProps) => {
                 const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 
                 if (!acc[monthKey]) {
-                    acc[monthKey] = {
-                        month: monthKey,
-                        total: 0,
-                        critical: 0,
-                        high: 0,
-                        medium: 0,
-                        low: 0,
-                    };
+                    acc[monthKey] = { month: monthKey, total: 0 };
                 }
 
                 acc[monthKey].total++;
-                const severityKey =
-                    incident.severity.toLowerCase() as keyof Omit<
-                        MonthlyIncidentData,
-                        'month' | 'total'
-                    >;
-                if (severityKey in acc[monthKey]) {
-                    acc[monthKey][severityKey]++;
-                }
-
                 return acc;
             },
             {} as { [key: string]: MonthlyIncidentData }
@@ -175,7 +127,6 @@ const EventDetailPage = ({ teamDeployed }: EventPageProps) => {
         );
     }, [teamIncidents]);
 
-    // Process location data
     const locationChartData = useMemo(() => {
         const locationCount = teamIncidents.reduce(
             (acc, incident) => {
@@ -195,40 +146,14 @@ const EventDetailPage = ({ teamDeployed }: EventPageProps) => {
                 count,
             }))
             .sort((a, b) => b.count - a.count)
-            .slice(0, 10); // Top 10 locations
+            .slice(0, 10);
     }, [teamIncidents]);
-
-    const getSeverityColor = (severity: string) => {
-        switch (severity.toLowerCase()) {
-            case 'critical':
-                return '#ef4444';
-            case 'high':
-                return '#f59e0b';
-            case 'medium':
-                return '#3b82f6';
-            case 'low':
-                return '#22c55e';
-            default:
-                return '#6b7280';
-        }
-    };
 
     const getOverallRiskScore = () => {
         if (teamIncidents.length === 0)
             return { score: 0, label: 'No Data', color: 'default' };
 
-        const severityWeights = { critical: 4, high: 3, medium: 2, low: 1 };
-        const totalWeight = teamIncidents.reduce((sum, incident) => {
-            return (
-                sum +
-                (severityWeights[
-                    incident.severity.toLowerCase() as keyof typeof severityWeights
-                ] || 1)
-            );
-        }, 0);
-
-        const maxPossibleWeight = teamIncidents.length * 4;
-        const riskScore = (totalWeight / maxPossibleWeight) * 100;
+        const riskScore = Math.min((teamIncidents.length / 10) * 100, 100);
 
         if (riskScore >= 75)
             return { score: riskScore, label: 'High Risk', color: 'danger' };
@@ -241,7 +166,6 @@ const EventDetailPage = ({ teamDeployed }: EventPageProps) => {
 
     const riskScore = getOverallRiskScore();
 
-    // Custom tooltip for charts
     const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
         if (active && payload && payload.length) {
             return (
@@ -277,27 +201,25 @@ const EventDetailPage = ({ teamDeployed }: EventPageProps) => {
         return (
             <div className="bg-gray-50 min-h-screen p-6">
                 <div className="max-w-7xl mx-auto">
-                    {/* Header Skeleton */}
                     <div className="mb-8">
                         <div className="flex items-center gap-4 mb-4">
                             <Skeleton className="w-32 h-10 rounded-lg">
-                                <div className="h-10"></div>
+                                <div className="h-10" />
                             </Skeleton>
                         </div>
                         <div className="flex items-center gap-3 mb-2">
                             <Skeleton className="w-8 h-8 rounded">
-                                <div className="h-8"></div>
+                                <div className="h-8" />
                             </Skeleton>
                             <Skeleton className="w-64 h-8 rounded-lg">
-                                <div className="h-8"></div>
+                                <div className="h-8" />
                             </Skeleton>
                         </div>
                         <Skeleton className="w-80 h-4 rounded-lg">
-                            <div className="h-4"></div>
+                            <div className="h-4" />
                         </Skeleton>
                     </div>
 
-                    {/* Stats Cards Skeleton */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                         {Array.from({ length: 4 }).map((_, index) => (
                             <Card
@@ -306,14 +228,14 @@ const EventDetailPage = ({ teamDeployed }: EventPageProps) => {
                             >
                                 <CardBody className="flex flex-row items-center gap-3">
                                     <Skeleton className="w-10 h-10 rounded-lg">
-                                        <div className="h-10"></div>
+                                        <div className="h-10" />
                                     </Skeleton>
                                     <div className="flex-1">
                                         <Skeleton className="w-20 h-3 rounded mb-1">
-                                            <div className="h-3"></div>
+                                            <div className="h-3" />
                                         </Skeleton>
                                         <Skeleton className="w-12 h-6 rounded">
-                                            <div className="h-6"></div>
+                                            <div className="h-6" />
                                         </Skeleton>
                                     </div>
                                 </CardBody>
@@ -321,15 +243,14 @@ const EventDetailPage = ({ teamDeployed }: EventPageProps) => {
                         ))}
                     </div>
 
-                    {/* Recent Incidents Skeleton */}
                     <Card className="mb-8">
                         <CardHeader>
                             <div className="flex items-center gap-2">
                                 <Skeleton className="w-5 h-5 rounded">
-                                    <div className="h-5"></div>
+                                    <div className="h-5" />
                                 </Skeleton>
                                 <Skeleton className="w-40 h-6 rounded-lg">
-                                    <div className="h-6"></div>
+                                    <div className="h-6" />
                                 </Skeleton>
                             </div>
                         </CardHeader>
@@ -341,14 +262,14 @@ const EventDetailPage = ({ teamDeployed }: EventPageProps) => {
                                             <div className="flex justify-between items-start mb-3">
                                                 <div className="flex-1">
                                                     <Skeleton className="w-48 h-6 rounded-lg mb-2">
-                                                        <div className="h-6"></div>
+                                                        <div className="h-6" />
                                                     </Skeleton>
                                                     <Skeleton className="w-full h-4 rounded-lg mb-2">
-                                                        <div className="h-4"></div>
+                                                        <div className="h-4" />
                                                     </Skeleton>
                                                 </div>
                                                 <Skeleton className="w-16 h-6 rounded-full">
-                                                    <div className="h-6"></div>
+                                                    <div className="h-6" />
                                                 </Skeleton>
                                             </div>
                                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -359,10 +280,10 @@ const EventDetailPage = ({ teamDeployed }: EventPageProps) => {
                                                             className="flex items-center gap-1"
                                                         >
                                                             <Skeleton className="w-3 h-3 rounded">
-                                                                <div className="h-3"></div>
+                                                                <div className="h-3" />
                                                             </Skeleton>
                                                             <Skeleton className="w-20 h-3 rounded">
-                                                                <div className="h-3"></div>
+                                                                <div className="h-3" />
                                                             </Skeleton>
                                                         </div>
                                                     )
@@ -374,53 +295,6 @@ const EventDetailPage = ({ teamDeployed }: EventPageProps) => {
                             </div>
                         </CardBody>
                     </Card>
-
-                    {/* Risk Assessment Skeleton */}
-                    <Card className="mb-8">
-                        <CardHeader>
-                            <div className="flex items-center gap-2">
-                                <Skeleton className="w-5 h-5 rounded">
-                                    <div className="h-5"></div>
-                                </Skeleton>
-                                <Skeleton className="w-48 h-6 rounded-lg">
-                                    <div className="h-6"></div>
-                                </Skeleton>
-                            </div>
-                        </CardHeader>
-                        <CardBody>
-                            <div className="space-y-4">
-                                <Skeleton className="w-full h-8 rounded-lg">
-                                    <div className="h-8"></div>
-                                </Skeleton>
-                                <Skeleton className="w-80 h-4 rounded-lg">
-                                    <div className="h-4"></div>
-                                </Skeleton>
-                            </div>
-                        </CardBody>
-                    </Card>
-
-                    {/* Charts Grid Skeleton */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                        {Array.from({ length: 2 }).map((_, index) => (
-                            <Card key={index}>
-                                <CardHeader>
-                                    <div className="flex items-center gap-2">
-                                        <Skeleton className="w-5 h-5 rounded">
-                                            <div className="h-5"></div>
-                                        </Skeleton>
-                                        <Skeleton className="w-40 h-6 rounded-lg">
-                                            <div className="h-6"></div>
-                                        </Skeleton>
-                                    </div>
-                                </CardHeader>
-                                <CardBody>
-                                    <Skeleton className="w-full h-64 rounded-lg">
-                                        <div className="h-64"></div>
-                                    </Skeleton>
-                                </CardBody>
-                            </Card>
-                        ))}
-                    </div>
                 </div>
             </div>
         );
@@ -455,7 +329,7 @@ const EventDetailPage = ({ teamDeployed }: EventPageProps) => {
                 </div>
 
                 {/* Stats Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
                     <Card className="bg-gradient-to-r from-red-50 to-red-100">
                         <CardBody className="flex flex-row items-center gap-3">
                             <div className="p-2 bg-red-500 rounded-lg">
@@ -467,22 +341,6 @@ const EventDetailPage = ({ teamDeployed }: EventPageProps) => {
                                 </p>
                                 <p className="text-2xl font-bold text-red-700">
                                     {teamIncidents.length}
-                                </p>
-                            </div>
-                        </CardBody>
-                    </Card>
-
-                    <Card className="bg-gradient-to-r from-orange-50 to-orange-100">
-                        <CardBody className="flex flex-row items-center gap-3">
-                            <div className="p-2 bg-orange-500 rounded-lg">
-                                <Shield className="w-6 h-6 text-white" />
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-600">
-                                    Risk Score
-                                </p>
-                                <p className="text-2xl font-bold text-orange-700">
-                                    {riskScore.score.toFixed(0)}%
                                 </p>
                             </div>
                         </CardBody>
@@ -527,7 +385,6 @@ const EventDetailPage = ({ teamDeployed }: EventPageProps) => {
                     </Card>
                 </div>
 
-                {/* Recent Incidents List */}
                 {teamIncidents.length > 0 && (
                     <RecentIncidents
                         teamIncidents={teamIncidents}
@@ -535,7 +392,7 @@ const EventDetailPage = ({ teamDeployed }: EventPageProps) => {
                     />
                 )}
 
-                {/* Risk Score Progress */}
+                {/* Risk Score */}
                 <Card className="mb-8 border border-red-100 shadow-sm">
                     <CardHeader>
                         <div className="flex items-center gap-2">
@@ -545,96 +402,39 @@ const EventDetailPage = ({ teamDeployed }: EventPageProps) => {
                             </h2>
                         </div>
                     </CardHeader>
-
                     <CardBody className="px-6 pb-6 pt-2">
                         <div className="w-full space-y-3">
-
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-gray-600">
-                                Risk Score
-                            </span>
-
-                            <span className="text-2xl font-bold text-red-600">
-                                {riskScore.score.toFixed(0)}%
-                            </span>
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium text-gray-600">
+                                    Risk Score
+                                </span>
+                                <span className="text-2xl font-bold text-red-600">
+                                    {riskScore.score.toFixed(0)}%
+                                </span>
+                            </div>
+                            <Progress
+                                size="lg"
+                                value={riskScore.score}
+                                color={riskScore.color as colorTypes}
+                                showValueLabel={false}
+                                className="w-full"
+                                aria-labelledby="progress"
+                                aria-valuenow={riskScore.score}
+                                aria-valuemin={0}
+                                aria-valuemax={100}
+                            />
+                            <p className="text-sm text-gray-600 flex items-center gap-2 pt-1">
+                                <BarChart3 className="w-4 h-4 text-red-500" />
+                                Based on {teamIncidents.length} incidents
+                                reported by this team
+                            </p>
                         </div>
-
-                        <Progress
-                            size="lg"
-                            value={riskScore.score}
-                            color={riskScore.color as colorTypes}
-                            showValueLabel={false}
-                            className="w-full"
-                            aria-labelledby="progress"
-                            aria-valuenow={riskScore.score}
-                            aria-valuemin={0}
-                            aria-valuemax={100}
-                        />
-
-                        <p className="text-sm text-gray-600 flex items-center gap-2 pt-1">
-                            <BarChart3 className="w-4 h-4 text-red-500" />
-                            Based on {teamIncidents.length} incidents with weighted severity analysis
-                        </p>
-
-                    </div>
                     </CardBody>
                 </Card>
 
-                {/* Charts Grid */}
+                {/* Charts */}
                 {teamIncidents.length > 0 ? (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                        {/* Severity Distribution */}
-                        <Card>
-                            <CardHeader>
-                                <div className="flex items-center gap-2">
-                                    <AlertCircle className="w-5 h-5 text-red-600" />
-                                    <h2 className="text-xl font-semibold text-gray-900">
-                                        Severity Distribution
-                                    </h2>
-                                </div>
-                            </CardHeader>
-                            <CardBody>
-                                <div className="w-full h-[260px]">
-                                    <ResponsiveContainer
-                                        width="100%"
-                                        height="100%"
-                                    >
-                                        <PieChart>
-                                            <Pie
-                                                data={severityChartData}
-                                                cx="50%"
-                                                cy="50%"
-                                                labelLine={false}
-                                                label={({
-                                                    severity,
-                                                    percentage,
-                                                }) =>
-                                                    `${severity}: ${percentage}%`
-                                                }
-                                                outerRadius={80}
-                                                fill="#8884d8"
-                                                dataKey="count"
-                                            >
-                                                {severityChartData.map(
-                                                    (entry, index) => (
-                                                        <Cell
-                                                            key={`cell-${index}`}
-                                                            fill={getSeverityColor(
-                                                                entry.severity
-                                                            )}
-                                                        />
-                                                    )
-                                                )}
-                                            </Pie>
-                                            <Tooltip
-                                                content={<CustomTooltip />}
-                                            />
-                                        </PieChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </CardBody>
-                        </Card>
-
                         {/* Category Breakdown */}
                         <Card>
                             <CardHeader>
@@ -686,7 +486,7 @@ const EventDetailPage = ({ teamDeployed }: EventPageProps) => {
                             </CardBody>
                         </Card>
 
-                        {/* Timeline Chart */}
+                        {/* Timeline */}
                         <Card className="lg:col-span-2">
                             <CardHeader>
                                 <div className="flex items-center gap-2">
@@ -730,34 +530,6 @@ const EventDetailPage = ({ teamDeployed }: EventPageProps) => {
                                                 stroke="#3b82f6"
                                                 strokeWidth={3}
                                                 name="Total"
-                                            />
-                                            <Line
-                                                type="monotone"
-                                                dataKey="critical"
-                                                stroke="#ef4444"
-                                                strokeWidth={2}
-                                                name="Critical"
-                                            />
-                                            <Line
-                                                type="monotone"
-                                                dataKey="high"
-                                                stroke="#f59e0b"
-                                                strokeWidth={2}
-                                                name="High"
-                                            />
-                                            <Line
-                                                type="monotone"
-                                                dataKey="medium"
-                                                stroke="#3b82f6"
-                                                strokeWidth={2}
-                                                name="Medium"
-                                            />
-                                            <Line
-                                                type="monotone"
-                                                dataKey="low"
-                                                stroke="#22c55e"
-                                                strokeWidth={2}
-                                                name="Low"
                                             />
                                         </LineChart>
                                     </ResponsiveContainer>
