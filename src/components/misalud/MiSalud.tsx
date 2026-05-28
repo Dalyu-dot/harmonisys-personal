@@ -62,11 +62,10 @@ export interface IncidentGroup {
 }
 
 type MiSaludProps = {
-  userRole?: 'ADMIN' | 'RESPONDER' | 'STANDARD' | string;
+    userRole?: 'ADMIN' | 'RESPONDER' | 'STANDARD' | string;
 };
-    
-    const MiSalud = ({ userRole = 'STANDARD' }: MiSaludProps) => {
-    
+
+const MiSalud = ({ userRole = 'STANDARD' }: MiSaludProps) => {
     const misaludTheme = {
         primaryGradient:
             'bg-gradient-to-r from-emerald-800 via-emerald-700 to-emerald-600',
@@ -81,21 +80,20 @@ type MiSaludProps = {
 
     const router = useRouter();
     useEffect(() => {
-    const canAccess = isAdminView || isResponderView;
-    if (!canAccess) {
-        router.replace('/overview/misalud');
-    }
+        const canAccess = isAdminView || isResponderView;
+        if (!canAccess) {
+            router.replace('/overview/misalud');
+        }
     }, [isAdminView, isResponderView, router]);
 
-    const [selectedView, setSelectedView] = useState<'teams' | 'events'>('teams');
+    const [selectedView, setSelectedView] = useState<'teams' | 'events'>(
+        'teams'
+    );
     const [selectedFilter, setSelectedFilter] = useState<string>('all');
     const [searchQuery, setSearchQuery] = useState<string>('');
 
     // Original data (for archive)
-    const {
-        data: teamsData = [],
-        isLoading: loadingTeams,
-    } = useQuery<Team[]>({
+    const { data: teamsData = [], isLoading: loadingTeams } = useQuery<Team[]>({
         queryKey: ['misalud-teams'],
         queryFn: async () => {
             const response = await fetch('/api/misalud/teams');
@@ -110,10 +108,9 @@ type MiSaludProps = {
         staleTime: 5 * 60 * 1000,
     });
 
-    const {
-        data: eventsData = [],
-        isLoading: loadingEvents,
-    } = useQuery<Event[]>({
+    const { data: eventsData = [], isLoading: loadingEvents } = useQuery<
+        Event[]
+    >({
         queryKey: ['misalud-screenings'],
         queryFn: async () => {
             const response = await fetch('/api/misalud/screenings');
@@ -145,10 +142,9 @@ type MiSaludProps = {
         staleTime: 2 * 60 * 1000,
     });
 
-    const {
-        data: incidentsData = [],
-        isLoading: loadingIncidents,
-    } = useQuery<Incident[]>({
+    const { data: incidentsData = [], isLoading: loadingIncidents } = useQuery<
+        Incident[]
+    >({
         queryKey: ['misalud-incidents'],
         queryFn: async () => {
             const response = await fetch('/api/irs/incidents');
@@ -200,14 +196,13 @@ type MiSaludProps = {
         staleTime: 2 * 60 * 1000,
     });
 
-    const membershipStatus =
-        membershipResult?.status || 'NONE';
+    const membershipStatus = membershipResult?.status || 'NONE';
 
     const membershipData = membershipResult?.membership || null;
 
     const isApprovedTeamLeader =
-    membershipStatus === 'APPROVED' &&
-    membershipData?.role === 'TEAM_LEADER';
+        membershipStatus === 'APPROVED' &&
+        membershipData?.role === 'TEAM_LEADER';
 
     const handleRecommendations = (
         responses: QuestionnaireResponses,
@@ -254,29 +249,19 @@ type MiSaludProps = {
             groups[team].push(incident);
         });
 
-        return Object.entries(groups).map(([teamDeployed, incidents]) => {
-            const severityBreakdown = incidents.reduce(
-                (acc, incident) => {
-                    acc[incident.severity] = (acc[incident.severity] || 0) + 1;
-                    return acc;
-                },
-                {} as { [key: string]: number }
-            );
-
-            return {
-                teamDeployed,
-                incidents,
-                totalIncidents: incidents.length,
-                lastIncident: incidents.reduce(
-                    (latest, incident) =>
-                        new Date(incident.createdAt) > new Date(latest)
-                            ? incident.createdAt
-                            : latest,
-                    incidents[0]?.createdAt || ''
-                ),
-                severityBreakdown,
-            };
-        });
+        return Object.entries(groups).map(([teamDeployed, incidents]) => ({
+            teamDeployed,
+            incidents,
+            totalIncidents: incidents.length,
+            lastIncident: incidents.reduce(
+                (latest, incident) =>
+                    new Date(incident.createdAt) > new Date(latest)
+                        ? incident.createdAt
+                        : latest,
+                incidents[0]?.createdAt || ''
+            ),
+            severityBreakdown: {} as { [key: string]: number }, // ← severity removed from schema
+        }));
     }, [incidentsData]);
 
     // Handle team click
@@ -376,22 +361,6 @@ type MiSaludProps = {
                 );
             }
 
-            // Apply severity filters
-            if (selectedFilter === 'high-severity') {
-                filtered = filtered.filter((group) =>
-                    group.incidents.some(
-                        (incident) => incident.severity.toLowerCase() === 'high'
-                    )
-                );
-            } else if (selectedFilter === 'critical-severity') {
-                filtered = filtered.filter((group) =>
-                    group.incidents.some(
-                        (incident) =>
-                            incident.severity.toLowerCase() === 'critical'
-                    )
-                );
-            }
-
             return filtered;
         }
     }, [eventsData, incidentGroups, selectedFilter, searchQuery]);
@@ -414,13 +383,12 @@ type MiSaludProps = {
     const isLoading = isArchiveView
         ? loadingOriginal
         : selectedView === 'teams'
-        ? loadingQuestionnaire
-        : loadingIncidents;
+          ? loadingQuestionnaire
+          : loadingIncidents;
 
     return (
         <div className="min-h-screen bg-emerald-50 relative">
             <div className="container mx-auto px-4 py-8 max-w-7xl">
-
                 <div
                     className={`transition-all duration-300 ${
                         !isAdminView && membershipStatus !== 'APPROVED'
@@ -428,32 +396,36 @@ type MiSaludProps = {
                             : ''
                     }`}
                 >
-                {/* ✅ COMBINED HEADER + CONTROLS (like User Controller / REDAS) */}
-                <Card className="mb-8 bg-white/70 backdrop-blur-sm shadow-lg border border-white/20 overflow-hidden rounded-[28px]">
-                {/* ✅ HERO (top) */}
-                <div className={`bg-gradient-to-r ${misaludTheme.primaryGradient}`}>
-                    <div className="p-6">
-                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                        <div>
-                        <h1 className="text-4xl lg:text-5xl font-black text-white drop-shadow-[0_12px_22px_rgba(0,0,0,0.35)] mb-2">
-                            Mi Salud Dashboard
-                        </h1>
-                        <p className="text-white/85 text-lg">
-                            {isArchiveView
-                            ? 'Explore archived teams and events data with comprehensive historical insights'
-                            : 'Monitor team wellness through questionnaire submissions and health analytics'}
-                        </p>
-                        </div>
+                    {/* ✅ COMBINED HEADER + CONTROLS (like User Controller / REDAS) */}
+                    <Card className="mb-8 bg-white/70 backdrop-blur-sm shadow-lg border border-white/20 overflow-hidden rounded-[28px]">
+                        {/* ✅ HERO (top) */}
+                        <div
+                            className={`bg-gradient-to-r ${misaludTheme.primaryGradient}`}
+                        >
+                            <div className="p-6">
+                                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                                    <div>
+                                        <h1 className="text-4xl lg:text-5xl font-black text-white drop-shadow-[0_12px_22px_rgba(0,0,0,0.35)] mb-2">
+                                            Mi Salud Dashboard
+                                        </h1>
+                                        <p className="text-white/85 text-lg">
+                                            {isArchiveView
+                                                ? 'Explore archived teams and events data with comprehensive historical insights'
+                                                : 'Monitor team wellness through questionnaire submissions and health analytics'}
+                                        </p>
+                                    </div>
 
-                        {/* Action Buttons */}
-                        <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-end">
-                        {!isResponderView && (
-                            <Button
-                            as={Link}
-                            href="/overview/misalud"
-                            variant="light"
-                            startContent={<ArrowLeft className="w-4 h-4" />}
-                            className="
+                                    {/* Action Buttons */}
+                                    <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-end">
+                                        {!isResponderView && (
+                                            <Button
+                                                as={Link}
+                                                href="/overview/misalud"
+                                                variant="light"
+                                                startContent={
+                                                    <ArrowLeft className="w-4 h-4" />
+                                                }
+                                                className="
                                 h-12 px-6
                                 bg-white/15 text-white
                                 border border-white/25
@@ -464,13 +436,13 @@ type MiSaludProps = {
                                 font-medium
                                 rounded-xl
                             "
-                            >
-                            Go Back
-                            </Button>
-                        )}
+                                            >
+                                                Go Back
+                                            </Button>
+                                        )}
 
-                        <Button
-                            className="
+                                        <Button
+                                            className="
                                 font-bold
                                 bg-white text-emerald-700
                                 border border-white/70
@@ -482,79 +454,116 @@ type MiSaludProps = {
                                 hover:bg-emerald-50
                                 hover:text-emerald-800
                             "
-                            size="lg"
-                            onPress={() => setShowQuestionnaireModal(true)}
-                            endContent={
-                                <svg
-                                className="w-5 h-5 text-emerald-700 group-hover:text-emerald-800"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                                >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                                />
-                                </svg>
-                            }
-                            >
-                            Assess Health
-                            </Button>
+                                            size="lg"
+                                            onPress={() =>
+                                                setShowQuestionnaireModal(true)
+                                            }
+                                            endContent={
+                                                <svg
+                                                    className="w-5 h-5 text-emerald-700 group-hover:text-emerald-800"
+                                                    fill="none"
+                                                    viewBox="0 0 24 24"
+                                                    stroke="currentColor"
+                                                >
+                                                    <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        strokeWidth={2}
+                                                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                                                    />
+                                                </svg>
+                                            }
+                                        >
+                                            Assess Health
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    </div>
-                </div>
 
-                {/* ✅ CONTROLS (bottom attached) */}
-                <div className="border-t border-white/30">
-                <MiSaludControls
-                    searchQuery={searchQuery}
-                    selectedFilter={selectedFilter}
-                    selectedView={selectedView}
-                    setSearchQuery={setSearchQuery}
-                    setSelectedFilter={setSelectedFilter}
-                    setSelectedView={setSelectedView}
-                    showLeaderActions={isApprovedTeamLeader}
-                    onLeaderRequestsClick={() => router.push('/misalud/team-requests')}
-                />
-                </div>
-                </Card>
-                {/* Stats Section */}
-                <MiSaludStats
-                    eventsData={eventsData}
-                    filteredEvents={filteredEvents}
-                    filteredTeams={filteredTeams}
-                    incidentsData={incidentsData}
-                    isArchiveView={isArchiveView}
-                    questionnaireData={questionnaireData}
-                    selectedView={selectedView}
-                    teamGroups={teamGroups}
-                    teamsData={teamsData}
-                    loading={isLoading}
-                />
-                {/* Data Grid Section */}
-                <MiSaludGrid
-                    filteredEvents={filteredEvents}
-                    filteredTeams={filteredTeams}
-                    getTeamByEventId={getTeamByEventId}
-                    handleEventClick={handleEventClick}
-                    handleTeamClick={handleTeamClick}
-                    isArchiveView={isArchiveView}
-                    isLoading={isLoading}
-                    selectedView={selectedView}
-                />
-                {/* Questionnaire Modal */}
-                {showQuestionnaireModal && (
-                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                        <Card className="bg-white shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                            <CardHeader className="pb-4 border-b border-slate-200">
-                                <div className="flex items-center justify-between w-full">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-3 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl shadow-lg">
+                        {/* ✅ CONTROLS (bottom attached) */}
+                        <div className="border-t border-white/30">
+                            <MiSaludControls
+                                searchQuery={searchQuery}
+                                selectedFilter={selectedFilter}
+                                selectedView={selectedView}
+                                setSearchQuery={setSearchQuery}
+                                setSelectedFilter={setSelectedFilter}
+                                setSelectedView={setSelectedView}
+                                showLeaderActions={isApprovedTeamLeader}
+                                onLeaderRequestsClick={() =>
+                                    router.push('/misalud/team-requests')
+                                }
+                            />
+                        </div>
+                    </Card>
+                    {/* Stats Section */}
+                    <MiSaludStats
+                        eventsData={eventsData}
+                        filteredEvents={filteredEvents}
+                        filteredTeams={filteredTeams}
+                        incidentsData={incidentsData}
+                        isArchiveView={isArchiveView}
+                        questionnaireData={questionnaireData}
+                        selectedView={selectedView}
+                        teamGroups={teamGroups}
+                        teamsData={teamsData}
+                        loading={isLoading}
+                    />
+                    {/* Data Grid Section */}
+                    <MiSaludGrid
+                        filteredEvents={filteredEvents}
+                        filteredTeams={filteredTeams}
+                        getTeamByEventId={getTeamByEventId}
+                        handleEventClick={handleEventClick}
+                        handleTeamClick={handleTeamClick}
+                        isArchiveView={isArchiveView}
+                        isLoading={isLoading}
+                        selectedView={selectedView}
+                    />
+                    {/* Questionnaire Modal */}
+                    {showQuestionnaireModal && (
+                        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                            <Card className="bg-white shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                                <CardHeader className="pb-4 border-b border-slate-200">
+                                    <div className="flex items-center justify-between w-full">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-3 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl shadow-lg">
+                                                <svg
+                                                    className="w-6 h-6 text-white"
+                                                    fill="none"
+                                                    viewBox="0 0 24 24"
+                                                    stroke="currentColor"
+                                                >
+                                                    <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        strokeWidth={2}
+                                                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                                                    />
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <h2 className="text-2xl font-bold bg-gradient-to-r from-emerald-700 to-teal-700 bg-clip-text text-transparent">
+                                                    Health Assessment
+                                                </h2>
+                                                <p className="text-slate-600 text-sm">
+                                                    Complete your wellness
+                                                    evaluation
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <Button
+                                            isIconOnly
+                                            variant="light"
+                                            onPress={() =>
+                                                setShowQuestionnaireModal(false)
+                                            }
+                                            className="hover:bg-red-100"
+                                        >
                                             <svg
-                                                className="w-6 h-6 text-white"
+                                                className="w-6 h-6 text-slate-400 hover:text-red-500"
                                                 fill="none"
                                                 viewBox="0 0 24 24"
                                                 stroke="currentColor"
@@ -563,208 +572,183 @@ type MiSaludProps = {
                                                     strokeLinecap="round"
                                                     strokeLinejoin="round"
                                                     strokeWidth={2}
-                                                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                                                    d="M6 18L18 6M6 6l12 12"
                                                 />
                                             </svg>
-                                        </div>
-                                        <div>
-                                            <h2 className="text-2xl font-bold bg-gradient-to-r from-emerald-700 to-teal-700 bg-clip-text text-transparent">
-                                                Health Assessment
-                                            </h2>
-                                            <p className="text-slate-600 text-sm">
-                                                Complete your wellness
-                                                evaluation
-                                            </p>
-                                        </div>
+                                        </Button>
                                     </div>
+                                </CardHeader>
 
-                                    <Button
-                                        isIconOnly
-                                        variant="light"
-                                        onPress={() =>
+                                <CardBody className="p-6">
+                                    <Questionnaire
+                                        onClose={() =>
                                             setShowQuestionnaireModal(false)
                                         }
-                                        className="hover:bg-red-100"
-                                    >
-                                        <svg
-                                            className="w-6 h-6 text-slate-400 hover:text-red-500"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M6 18L18 6M6 6l12 12"
-                                            />
-                                        </svg>
-                                    </Button>
-                                </div>
-                            </CardHeader>
+                                        openSuccessModal={() =>
+                                            setShowSuccessDialog(true)
+                                        }
+                                        approvedTeamName={
+                                            membershipData?.teamName
+                                        }
+                                        handleRecommendations={
+                                            handleRecommendations
+                                        }
+                                    />
+                                </CardBody>
+                            </Card>
+                        </div>
+                    )}
 
-                            <CardBody className="p-6">
-                                <Questionnaire
-                                    onClose={() =>
-                                        setShowQuestionnaireModal(false)
-                                    }
-                                    openSuccessModal={() =>
-                                        setShowSuccessDialog(true)
-                                    }
-                                    approvedTeamName={membershipData?.teamName}
-                                    handleRecommendations={
-                                        handleRecommendations
-                                    }
-                                />
-                            </CardBody>
-                        </Card>
-                    </div>
-                )}
-
-                <RecommendationsModal
-                    open={showSuccessDialog}
-                    onClose={() => setShowSuccessDialog(false)}
-                    recommendations={recommendations}
-                    formData={formData}
-                />
+                    <RecommendationsModal
+                        open={showSuccessDialog}
+                        onClose={() => setShowSuccessDialog(false)}
+                        recommendations={recommendations}
+                        formData={formData}
+                    />
+                </div>
             </div>
-        </div>
-        
 
             {showRegistrationModal && (
-                    <div className="fixed inset-x-0 top-[64px] bottom-0 bg-black/60 z-[110] flex items-center justify-center p-4">
-                        <Card className="bg-white shadow-2xl w-full max-w-xl">
-                            <CardHeader className="pb-4 border-b border-slate-200">
-                                <div className="flex items-center justify-between w-full">
-                                    <div>
-                                        <h2 className="text-2xl font-bold text-emerald-700">
-                                            Mi Salud Registration
-                                        </h2>
-                                        <p className="text-slate-600 text-sm">
-                                            Complete your registration to request access to the Mi Salud dashboard
-                                        </p>
-                                    </div>
+                <div className="fixed inset-x-0 top-[64px] bottom-0 bg-black/60 z-[110] flex items-center justify-center p-4">
+                    <Card className="bg-white shadow-2xl w-full max-w-xl">
+                        <CardHeader className="pb-4 border-b border-slate-200">
+                            <div className="flex items-center justify-between w-full">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-emerald-700">
+                                        Mi Salud Registration
+                                    </h2>
+                                    <p className="text-slate-600 text-sm">
+                                        Complete your registration to request
+                                        access to the Mi Salud dashboard
+                                    </p>
+                                </div>
+
+                                <Button
+                                    isIconOnly
+                                    variant="light"
+                                    onPress={() =>
+                                        setShowRegistrationModal(false)
+                                    }
+                                    className="hover:bg-red-100"
+                                >
+                                    <svg
+                                        className="w-6 h-6 text-slate-400 hover:text-red-500"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M6 18L18 6M6 6l12 12"
+                                        />
+                                    </svg>
+                                </Button>
+                            </div>
+                        </CardHeader>
+
+                        <CardBody className="p-6">
+                            <MiSaludRegistrationForm
+                                onCancel={() => setShowRegistrationModal(false)}
+                                onSuccess={async () => {
+                                    setIsSubmitting(true); // 🔒 lock UI transitions
+
+                                    setShowRegistrationModal(false);
+
+                                    await refetchMembership();
+
+                                    setIsSubmitting(false); // 🔓 unlock after stable state
+                                }}
+                            />
+                        </CardBody>
+                    </Card>
+                </div>
+            )}
+
+            {/* 🔒 MiSalud Membership Modal (FIXED FLOW) */}
+            {showMembershipModal && !showRegistrationModal && (
+                <div className="fixed inset-x-0 top-[64px] bottom-0 z-[100] flex items-center justify-center bg-black/60 p-4">
+                    <Card className="w-full max-w-lg shadow-2xl border border-white/20">
+                        <CardBody className="p-6 text-center space-y-4">
+                            {/* NONE → Join Mi Salud */}
+                            {membershipStatus === 'NONE' && (
+                                <>
+                                    <h2 className="text-2xl font-bold text-emerald-700">
+                                        Join Mi Salud
+                                    </h2>
+
+                                    <p className="text-slate-600">
+                                        Before accessing the dashboard, you must
+                                        register your team or join an existing
+                                        one.
+                                    </p>
 
                                     <Button
-                                        isIconOnly
-                                        variant="light"
-                                        onPress={() => setShowRegistrationModal(false)}
-                                        className="hover:bg-red-100"
+                                        onPress={() => {
+                                            setIsSubmitting(false);
+                                            setShowRegistrationModal(true);
+                                        }}
+                                        className={`${misaludTheme.primaryGradient} text-white font-bold rounded-xl`}
                                     >
-                                        <svg
-                                            className="w-6 h-6 text-slate-400 hover:text-red-500"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M6 18L18 6M6 6l12 12"
-                                            />
-                                        </svg>
+                                        Register Now
                                     </Button>
-                                </div>
-                            </CardHeader>
+                                </>
+                            )}
 
-                            <CardBody className="p-6">
-                                <MiSaludRegistrationForm
-                                    onCancel={() => setShowRegistrationModal(false)}
-                                    onSuccess={async () => {
-                                        setIsSubmitting(true);          // 🔒 lock UI transitions
+                            {/* PENDING → Request Pending */}
+                            {membershipStatus === 'PENDING' && (
+                                <>
+                                    <h2 className="text-xl font-bold text-yellow-600">
+                                        Request Pending
+                                    </h2>
 
-                                        setShowRegistrationModal(false);
+                                    <p className="text-slate-600">
+                                        {membershipData?.requestedRole ===
+                                        'TEAM_LEADER'
+                                            ? 'Your team registration has been submitted and is now waiting for admin approval. You will be able to access Mi Salud once your request is approved.'
+                                            : 'Your join request is waiting for team leader approval.'}
+                                    </p>
+                                </>
+                            )}
 
-                                        await refetchMembership();
+                            {/* REJECTED → Rejected */}
+                            {membershipStatus === 'REJECTED' && (
+                                <>
+                                    <h2 className="text-xl font-bold text-red-600">
+                                        Request Not Approved
+                                    </h2>
 
-                                        setIsSubmitting(false);         // 🔓 unlock after stable state
-                                    }}
-                                />
-                            </CardBody>
-                        </Card>
-                    </div>
-                )}
+                                    <p className="text-slate-600">
+                                        Your previous request was not approved.
+                                        You may submit a new request.
+                                    </p>
 
-                {/* 🔒 MiSalud Membership Modal (FIXED FLOW) */}
-                {showMembershipModal && !showRegistrationModal && (
-                    <div className="fixed inset-x-0 top-[64px] bottom-0 z-[100] flex items-center justify-center bg-black/60 p-4">
-                        <Card className="w-full max-w-lg shadow-2xl border border-white/20">
-                            <CardBody className="p-6 text-center space-y-4">
+                                    {membershipData?.rejectionReason && (
+                                        <div className="rounded-xl bg-red-50 border border-red-200 p-3 text-left">
+                                            <p className="text-sm font-semibold text-red-700 mb-1">
+                                                Rejection Reason
+                                            </p>
+                                            <p className="text-sm text-red-600">
+                                                {membershipData.rejectionReason}
+                                            </p>
+                                        </div>
+                                    )}
 
-                                {/* NONE → Join Mi Salud */}
-                                {membershipStatus === 'NONE' && (
-                                    <>
-                                        <h2 className="text-2xl font-bold text-emerald-700">
-                                            Join Mi Salud
-                                        </h2>
-
-                                        <p className="text-slate-600">
-                                            Before accessing the dashboard, you must register your team or join an existing one.
-                                        </p>
-
-                                        <Button
-                                            onPress={() => {
-                                                setIsSubmitting(false);
-                                                setShowRegistrationModal(true);
-                                            }}
-                                            className={`${misaludTheme.primaryGradient} text-white font-bold rounded-xl`}
-                                        >
-                                            Register Now
-                                        </Button>
-                                    </>
-                                )}
-
-                                {/* PENDING → Request Pending */}
-                                {membershipStatus === 'PENDING' && (
-                                    <>
-                                        <h2 className="text-xl font-bold text-yellow-600">
-                                            Request Pending
-                                        </h2>
-
-                                        <p className="text-slate-600">
-                                            {membershipData?.requestedRole === 'TEAM_LEADER'
-                                                ? 'Your team registration has been submitted and is now waiting for admin approval. You will be able to access Mi Salud once your request is approved.'
-                                                : 'Your join request is waiting for team leader approval.'}
-                                        </p>
-                                    </>
-                                )}
-
-                                {/* REJECTED → Rejected */}
-                                {membershipStatus === 'REJECTED' && (
-                                    <>
-                                        <h2 className="text-xl font-bold text-red-600">
-                                            Request Not Approved
-                                        </h2>
-
-                                        <p className="text-slate-600">
-                                            Your previous request was not approved. You may submit a new request.
-                                        </p>
-
-                                        {membershipData?.rejectionReason && (
-                                            <div className="rounded-xl bg-red-50 border border-red-200 p-3 text-left">
-                                                <p className="text-sm font-semibold text-red-700 mb-1">
-                                                    Rejection Reason
-                                                </p>
-                                                <p className="text-sm text-red-600">
-                                                    {membershipData.rejectionReason}
-                                                </p>
-                                            </div>
-                                        )}
-
-                                        <Button
-                                            className={`${misaludTheme.primaryGradient} text-white font-bold rounded-xl`}
-                                            onPress={() => setShowRegistrationModal(true)}
-                                        >
-                                            Submit Again
-                                        </Button>
-                                    </>
-                                )}
-
-                            </CardBody>
-                        </Card>
-                    </div>
-                )}
+                                    <Button
+                                        className={`${misaludTheme.primaryGradient} text-white font-bold rounded-xl`}
+                                        onPress={() =>
+                                            setShowRegistrationModal(true)
+                                        }
+                                    >
+                                        Submit Again
+                                    </Button>
+                                </>
+                            )}
+                        </CardBody>
+                    </Card>
+                </div>
+            )}
         </div>
     );
 };

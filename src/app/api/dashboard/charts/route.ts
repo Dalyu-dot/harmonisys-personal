@@ -17,32 +17,19 @@ export async function GET() {
 
         if (!session?.user?.email) {
             return NextResponse.json(
-                {
-                    success: false,
-                    error: 'Unauthorized',
-                    data: null,
-                },
+                { success: false, error: 'Unauthorized', data: null },
                 { status: 401 }
             );
         }
 
         const currentUser = await prisma.user.findUnique({
             where: { email: session.user.email },
-            select: {
-                id: true,
-                name: true,
-                email: true,
-                role: true,
-            },
+            select: { id: true, name: true, email: true, role: true },
         });
 
         if (!currentUser) {
             return NextResponse.json(
-                {
-                    success: false,
-                    error: 'User not found',
-                    data: null,
-                },
+                { success: false, error: 'User not found', data: null },
                 { status: 404 }
             );
         }
@@ -61,136 +48,73 @@ export async function GET() {
         ].filter(Boolean) as string[];
 
         const incidentWhere = isAdmin
-            ? {
-                  createdAt: {
-                      gte: twelveMonthsAgo,
-                  },
-              }
+            ? { createdAt: { gte: twelveMonthsAgo } }
             : {
                   AND: [
-                      {
-                          createdAt: {
-                              gte: twelveMonthsAgo,
-                          },
-                      },
+                      { createdAt: { gte: twelveMonthsAgo } },
                       {
                           OR: userAliases.map((alias) => ({
-                              reporter: {
-                                  equals: alias,
-                                  mode: 'insensitive' as const,
-                              },
+                              reporter: { equals: alias, mode: 'insensitive' as const },
                           })),
                       },
                   ],
               };
 
         const incidentRecentWhere = isAdmin
-            ? {
-                  createdAt: {
-                      gte: sevenDaysAgo,
-                  },
-              }
+            ? { createdAt: { gte: sevenDaysAgo } }
             : {
                   AND: [
-                      {
-                          createdAt: {
-                              gte: sevenDaysAgo,
-                          },
-                      },
+                      { createdAt: { gte: sevenDaysAgo } },
                       {
                           OR: userAliases.map((alias) => ({
-                              reporter: {
-                                  equals: alias,
-                                  mode: 'insensitive' as const,
-                              },
+                              reporter: { equals: alias, mode: 'insensitive' as const },
                           })),
                       },
                   ],
               };
 
         const unahonWhere = isAdmin
-            ? {
-                  date: {
-                      gte: twelveMonthsAgo,
-                  },
-              }
-            : {
-                  userId: currentUser.id,
-                  date: {
-                      gte: twelveMonthsAgo,
-                  },
-              };
+            ? { date: { gte: twelveMonthsAgo } }
+            : { userId: currentUser.id, date: { gte: twelveMonthsAgo } };
 
         const unahonRecentWhere = isAdmin
-            ? {
-                  date: {
-                      gte: sevenDaysAgo,
-                  },
-              }
-            : {
-                  userId: currentUser.id,
-                  date: {
-                      gte: sevenDaysAgo,
-                  },
-              };
+            ? { date: { gte: sevenDaysAgo } }
+            : { userId: currentUser.id, date: { gte: sevenDaysAgo } };
 
         const submissionWhere = isAdmin
-            ? {
-                  createdAt: {
-                      gte: twelveMonthsAgo,
-                  },
-              }
-            : ({
-                  userId: currentUser.id,
-                  createdAt: {
-                      gte: twelveMonthsAgo,
-                  },
-              } as any);
+            ? { createdAt: { gte: twelveMonthsAgo } }
+            : ({ userId: currentUser.id, createdAt: { gte: twelveMonthsAgo } } as any);
 
         const submissionRecentWhere = isAdmin
-            ? {
-                  createdAt: {
-                      gte: sevenDaysAgo,
-                  },
-              }
-            : ({
-                  userId: currentUser.id,
-                  createdAt: {
-                      gte: sevenDaysAgo,
-                  },
-              } as any);
+            ? { createdAt: { gte: sevenDaysAgo } }
+            : ({ userId: currentUser.id, createdAt: { gte: sevenDaysAgo } } as any);
 
-        // Monthly raw records
+        // ── Monthly raw records ──────────────────────────────────────────────
+
         const monthlyIncidents = await prisma.incident.findMany({
             where: incidentWhere,
-            select: {
-                createdAt: true,
-            },
+            select: { createdAt: true },
         });
 
         const monthlyUnahon = await prisma.unahon.findMany({
             where: unahonWhere,
-            select: {
-                date: true,
-            },
+            select: { date: true },
         });
 
         const monthlySubmissions = await prisma.submission
             .findMany({
                 where: submissionWhere,
-                select: {
-                    createdAt: true,
-                },
+                select: { createdAt: true },
             } as any)
             .catch(() => []);
 
-        // Build last 12 month slots
+        // ── Build last 12 month slots ────────────────────────────────────────
+
         const months: MonthData[] = [];
         const currentDate = new Date(twelveMonthsAgo);
 
         for (let i = 0; i < 12; i++) {
             const monthKey = currentDate.toISOString().slice(0, 7);
-
             months.push({
                 month: monthKey,
                 label: currentDate.toLocaleDateString('en-US', {
@@ -201,130 +125,77 @@ export async function GET() {
                 unahon: 0,
                 submissions: 0,
             });
-
             currentDate.setMonth(currentDate.getMonth() + 1);
         }
 
-        // Fill monthly incident counts
         monthlyIncidents.forEach((item) => {
             const monthKey = item.createdAt.toISOString().slice(0, 7);
-            const monthIndex = months.findIndex((m) => m.month === monthKey);
-
-            if (monthIndex !== -1) {
-                months[monthIndex].incidents += 1;
-            }
+            const idx = months.findIndex((m) => m.month === monthKey);
+            if (idx !== -1) months[idx].incidents += 1;
         });
 
-        // Fill monthly unahon counts
         monthlyUnahon.forEach((item) => {
             const monthKey = item.date.toISOString().slice(0, 7);
-            const monthIndex = months.findIndex((m) => m.month === monthKey);
-
-            if (monthIndex !== -1) {
-                months[monthIndex].unahon += 1;
-            }
+            const idx = months.findIndex((m) => m.month === monthKey);
+            if (idx !== -1) months[idx].unahon += 1;
         });
 
-        // Fill monthly submission counts
         monthlySubmissions.forEach((item: { createdAt: Date }) => {
             const monthKey = item.createdAt.toISOString().slice(0, 7);
-            const monthIndex = months.findIndex((m) => m.month === monthKey);
-
-            if (monthIndex !== -1) {
-                months[monthIndex].submissions += 1;
-            }
+            const idx = months.findIndex((m) => m.month === monthKey);
+            if (idx !== -1) months[idx].submissions += 1;
         });
 
-        // Distributions
-        const severityDistribution = await prisma.incident.groupBy({
-            by: ['severity'],
-            _count: {
-                severity: true,
-            },
-            where: isAdmin
-                ? undefined
-                : {
-                      OR: userAliases.map((alias) => ({
-                          reporter: {
-                              equals: alias,
-                              mode: 'insensitive' as const,
-                          },
-                      })),
-                  },
-        });
+        // ── Distributions ────────────────────────────────────────────────────
+
+        const incidentFilterWhere = isAdmin
+            ? undefined
+            : {
+                  OR: userAliases.map((alias) => ({
+                      reporter: { equals: alias, mode: 'insensitive' as const },
+                  })),
+              };
 
         const categoryDistribution = await prisma.incident.groupBy({
             by: ['category'],
-            _count: {
-                category: true,
-            },
-            where: isAdmin
-                ? undefined
-                : {
-                      OR: userAliases.map((alias) => ({
-                          reporter: {
-                              equals: alias,
-                              mode: 'insensitive' as const,
-                          },
-                      })),
-                  },
+            _count: { category: true },
+            where: incidentFilterWhere,
         });
 
         const assessmentTypeDistribution = await prisma.unahon.groupBy({
             by: ['assessmentType'],
-            _count: {
-                assessmentType: true,
-            },
+            _count: { assessmentType: true },
             where: isAdmin ? undefined : { userId: currentUser.id },
         });
 
         const userRoleDistribution = isAdmin
             ? await prisma.user.groupBy({
                   by: ['role'],
-                  _count: {
-                      role: true,
-                  },
+                  _count: { role: true },
               })
             : [];
 
         const topLocations = await prisma.incident.groupBy({
             by: ['location'],
-            _count: {
-                location: true,
-            },
-            where: isAdmin
-                ? undefined
-                : {
-                      OR: userAliases.map((alias) => ({
-                          reporter: {
-                              equals: alias,
-                              mode: 'insensitive' as const,
-                          },
-                      })),
-                  },
-            orderBy: {
-                _count: {
-                    location: 'desc',
-                },
-            },
+            _count: { location: true },
+            where: incidentFilterWhere,
+            orderBy: { _count: { location: 'desc' } },
             take: 10,
         });
 
-        // Recent activity timeline (last 7 days)
+        // ── Recent activity (last 7 days) ────────────────────────────────────
+
         const recentIncidents = await prisma.incident.findMany({
             where: incidentRecentWhere,
             select: {
                 id: true,
                 location: true,
                 category: true,
-                severity: true,
                 createdAt: true,
                 summary: true,
                 reporter: true,
             },
-            orderBy: {
-                createdAt: 'desc',
-            },
+            orderBy: { createdAt: 'desc' },
         });
 
         const recentUnahon = await prisma.unahon.findMany({
@@ -334,29 +205,16 @@ export async function GET() {
                 client: true,
                 assessmentType: true,
                 date: true,
-                responder: {
-                    select: {
-                        name: true,
-                    },
-                },
+                responder: { select: { name: true } },
             },
-            orderBy: {
-                date: 'desc',
-            },
+            orderBy: { date: 'desc' },
         });
 
         const recentSubmissions = await prisma.submission
             .findMany({
                 where: submissionRecentWhere,
-                select: {
-                    id: true,
-                    name: true,
-                    team: true,
-                    createdAt: true,
-                },
-                orderBy: {
-                    createdAt: 'desc',
-                },
+                select: { id: true, name: true, team: true, createdAt: true },
+                orderBy: { createdAt: 'desc' },
             } as any)
             .catch(() => []);
 
@@ -367,7 +225,6 @@ export async function GET() {
                 title: `${incident.category} incident in ${incident.location}`,
                 description: incident.summary,
                 timestamp: incident.createdAt,
-                severity: incident.severity,
                 tool: 'IRS',
             })),
             ...recentUnahon.map((unahon) => ({
@@ -387,12 +244,10 @@ export async function GET() {
                 tool: 'MiSalud',
             })),
         ]
-            .sort(
-                (a, b) =>
-                    new Date(b.timestamp).getTime() -
-                    new Date(a.timestamp).getTime()
-            )
+            .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
             .slice(0, 20);
+
+        // ── Response ─────────────────────────────────────────────────────────
 
         const chartsData = {
             monthlyTrends: {
@@ -419,10 +274,6 @@ export async function GET() {
                 ],
             },
             distributions: {
-                severity: severityDistribution.map((item) => ({
-                    name: item.severity,
-                    value: item._count.severity,
-                })),
                 category: categoryDistribution.map((item) => ({
                     name: item.category,
                     value: item._count.category,
@@ -450,13 +301,8 @@ export async function GET() {
         });
     } catch (error) {
         console.error('Error fetching dashboard charts data:', error);
-
         return NextResponse.json(
-            {
-                success: false,
-                error: 'Failed to fetch dashboard charts data',
-                data: null,
-            },
+            { success: false, error: 'Failed to fetch dashboard charts data', data: null },
             { status: 500 }
         );
     }

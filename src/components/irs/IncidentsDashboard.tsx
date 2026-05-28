@@ -56,37 +56,25 @@ const IncidentsDashboard = ({
 
         incidentsData.forEach((incident) => {
             const team = incident.teamDeployed || 'Unassigned';
-
             if (!groups[team]) {
                 groups[team] = [];
             }
-
             groups[team].push(incident);
         });
 
-        return Object.entries(groups).map(([teamDeployed, incidents]) => {
-            const severityBreakdown = incidents.reduce(
-                (acc, incident) => {
-                    acc[incident.severity] = (acc[incident.severity] || 0) + 1;
-                    return acc;
-                },
-                {} as { [key: string]: number }
-            );
-
-            return {
-                teamDeployed,
-                incidents,
-                totalIncidents: incidents.length,
-                lastIncident: incidents.reduce(
-                    (latest, incident) =>
-                        new Date(incident.createdAt) > new Date(latest)
-                            ? incident.createdAt
-                            : latest,
-                    incidents[0]?.createdAt || ''
-                ),
-                severityBreakdown,
-            };
-        });
+        return Object.entries(groups).map(([teamDeployed, incidents]) => ({
+            teamDeployed,
+            incidents,
+            totalIncidents: incidents.length,
+            lastIncident: incidents.reduce(
+                (latest, incident) =>
+                    new Date(incident.createdAt) > new Date(latest)
+                        ? incident.createdAt
+                        : latest,
+                incidents[0]?.createdAt || ''
+            ),
+            severityBreakdown: {} as { [key: string]: number },
+        }));
     }, [incidentsData]);
 
     const filteredEvents = useMemo(() => {
@@ -113,34 +101,8 @@ const IncidentsDashboard = ({
             );
         }
 
-        if (selectedFilter === 'low-severity') {
-            filtered = filtered.filter((group) =>
-                group.incidents.some(
-                    (incident) => incident.severity.toLowerCase() === 'low'
-                )
-            );
-        } else if (selectedFilter === 'medium-severity') {
-            filtered = filtered.filter((group) =>
-                group.incidents.some(
-                    (incident) => incident.severity.toLowerCase() === 'medium'
-                )
-            );
-        } else if (selectedFilter === 'high-severity') {
-            filtered = filtered.filter((group) =>
-                group.incidents.some(
-                    (incident) => incident.severity.toLowerCase() === 'high'
-                )
-            );
-        } else if (selectedFilter === 'critical-severity') {
-            filtered = filtered.filter((group) =>
-                group.incidents.some(
-                    (incident) => incident.severity.toLowerCase() === 'critical'
-                )
-            );
-        }
-
         return filtered;
-    }, [incidentGroups, searchQuery, selectedFilter]);
+    }, [incidentGroups, searchQuery]);
 
     const handleEventClick = (teamDeployed: string) => {
         router.push(`/irs/event/${encodeURIComponent(teamDeployed)}`);
@@ -164,13 +126,17 @@ const IncidentsDashboard = ({
                                         See Incidents
                                     </h1>
                                     <p className="text-white/85 text-lg">
-                                        Browse, review, and monitor submitted incident reports in a dedicated IRS workspace
+                                        Browse, review, and monitor submitted
+                                        incident reports in a dedicated IRS
+                                        workspace
                                     </p>
                                 </div>
 
                                 <Button
                                     variant="light"
-                                    startContent={<ArrowLeft className="w-4 h-4" />}
+                                    startContent={
+                                        <ArrowLeft className="w-4 h-4" />
+                                    }
                                     className="h-12 px-6 bg-white/15 text-white border border-white/25 backdrop-blur-sm hover:bg-white/20 rounded-xl"
                                     onPress={() => router.push('/overview/irs')}
                                 >
@@ -192,14 +158,17 @@ const IncidentsDashboard = ({
 
                             <select
                                 value={selectedFilter}
-                                onChange={(e) => setSelectedFilter(e.target.value)}
+                                onChange={(e) =>
+                                    setSelectedFilter(e.target.value)
+                                }
                                 className="h-14 w-full rounded-2xl border border-white/80 bg-white/95 px-5 text-[15px] font-semibold text-slate-800 shadow-[0_10px_30px_rgba(0,0,0,0.08)] outline-none transition-all duration-200 focus:border-[#7B122F] focus:ring-2 focus:ring-[#7B122F]/20"
                             >
                                 <option value="all">All Incidents</option>
-                                <option value="low-severity">Low Severity</option>
-                                <option value="medium-severity">Medium Severity</option>
-                                <option value="high-severity">High Severity</option>
-                                <option value="critical-severity">Critical Severity</option>
+                                <option value="status-pending">Pending</option>
+                                <option value="status-resolved">
+                                    Resolved
+                                </option>
+                                <option value="status-active">Active</option>
                             </select>
                         </div>
                     </CardBody>
