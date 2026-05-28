@@ -73,9 +73,10 @@ async function notifyTeamRejected(userId: string, teamName: string, requestId: s
 
 export async function PATCH(
     req: Request,
-    { params }: { params: { id: string } }
+     { params }: { params: Promise<{ id: string }> }
 ) {
     const session = await auth();
+    
     if (!session?.user?.id) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -86,7 +87,7 @@ export async function PATCH(
     };
 
     const request = await prisma.miSaludRequest.findUnique({
-        where: { id: params.id },
+        where: { id: (await params).id },
         include: { user: true, team: true },
     });
 
@@ -96,7 +97,7 @@ export async function PATCH(
 
     // ── 1. Persist the status change ────────────────────────────────────────
     const updated = await prisma.miSaludRequest.update({
-        where: { id: params.id },
+        where: { id: (await params).id },
         data: {
             status: body.status,
             rejectionReason: body.rejectionReason ?? null,
