@@ -218,7 +218,7 @@ function OtpStep({ email, onVerified, onBack }: OtpStepProps) {
                 isLoading={isPending}
                 className="w-full h-14 rounded-2xl bg-yellow-400 text-black font-bold text-[18px] hover:bg-yellow-300 disabled:opacity-50"
             >
-                Verify
+                {isPending ? 'Verifying...' : 'Verify'}
             </Button>
 
             <div className="flex items-center justify-between text-sm text-white/70">

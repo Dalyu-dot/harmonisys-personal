@@ -1,12 +1,12 @@
 export const footerLinks = [
-    {
-        title: 'Resources',
-        links: [
-            { title: 'FAQs', url: '/' },
-            { title: 'Tutorials', url: '/' },
-            { title: 'Case Studies', url: '/' },
-        ],
-    },
+    // {
+    //     title: 'Resources',
+    //     links: [
+    //         { title: 'FAQs', url: '/' },
+    //         { title: 'Tutorials', url: '/' },
+    //         { title: 'Case Studies', url: '/' },
+    //     ],
+    // },
     {
         title: 'Tools',
         links: [
@@ -21,8 +21,8 @@ export const footerLinks = [
     {
         title: 'Support',
         links: [
-            { title: 'About the Project', url: '/' },
-            { title: 'Documentation', url: '/' },
+            // { title: 'About the Project', url: '/' },
+            // { title: 'Documentation', url: '/' },
             { title: 'Contact', url: '/contact' },
         ],
     },
@@ -94,20 +94,20 @@ export const overviewContent = {
     },
 };
 
-export const socialMedia = [
-    {
-        id: 1,
-        img: '/facebook.svg',
-        link: 'https://www.facebook.com',
-        alt: 'Facebook',
-    },
-    {
-        id: 2,
-        img: '/linkedin.svg',
-        link: 'https://www.linkedin.com',
-        alt: 'LinkedIn',
-    },
-];
+// export const socialMedia = [
+//     {
+//         id: 1,
+//         img: '/facebook.svg',
+//         link: 'https://www.facebook.com',
+//         alt: 'Facebook',
+//     },
+//     {
+//         id: 2,
+//         img: '/linkedin.svg',
+//         link: 'https://www.linkedin.com',
+//         alt: 'LinkedIn',
+//     },
+// ];
 
 export const headerLinks = [
     { title: 'Dashboard', url: '/dashboard' },
