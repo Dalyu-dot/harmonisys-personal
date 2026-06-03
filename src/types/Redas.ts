@@ -83,7 +83,6 @@ export type Collaboration = {
     degreeCourse: string;
 };
 
-
 export interface Testimonial {
     quote: string;
     author: string;

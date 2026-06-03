@@ -23,7 +23,7 @@ const CITY_CODE_MAP: Record<string, string> = {
     taguig: 'TGU',
     pasay: 'PSY',
     paranaque: 'PRQ',
-    'parañaque': 'PRQ',
+    parañaque: 'PRQ',
     muntinlupa: 'MTP',
     'las pinas': 'LPN',
     'las piñas': 'LPN',
@@ -67,17 +67,22 @@ const buildLocationAcronym = (location?: string | null) => {
         return matchedEntry[1];
     }
 
-    const parts = location.split(',').map((p) => p.trim()).filter(Boolean);
+    const parts = location
+        .split(',')
+        .map((p) => p.trim())
+        .filter(Boolean);
     const fallbackPart = parts[parts.length - 1] || location;
 
-    return fallbackPart
-        .replace(/[^a-zA-Z ]/g, '')
-        .split(' ')
-        .filter(Boolean)
-        .map((word) => word[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 3) || 'UNK';
+    return (
+        fallbackPart
+            .replace(/[^a-zA-Z ]/g, '')
+            .split(' ')
+            .filter(Boolean)
+            .map((word) => word[0])
+            .join('')
+            .toUpperCase()
+            .slice(0, 3) || 'UNK'
+    );
 };
 
 const formatPatientDate = (date: Date) => {
@@ -141,6 +146,9 @@ const reverseGeocode = async (lat: number, lng: number) => {
 const PATIENT_ID_PADDING = 5;
 const PATIENT_ID_BATCH_SIZE = 10;
 
+// Sentinel used while the real location is still being resolved via geolocation
+const LOCATION_PENDING = '__PENDING__';
+
 const generatePatientIdOptions = (
     location: string,
     date: Date,
@@ -202,7 +210,10 @@ const Unahon: React.FC<UnahonProps> = ({
         unahonSections.forEach((section, section_index) => {
             initialChecklist[section_index] = {};
             section.questions.forEach((question: Row) => {
-                initialChecklist[section_index][question.number] = [false, false];
+                initialChecklist[section_index][question.number] = [
+                    false,
+                    false,
+                ];
             });
         });
 
@@ -221,31 +232,45 @@ const Unahon: React.FC<UnahonProps> = ({
                 ? new Date(clientConfidentialForm.date)
                 : new Date();
 
-            const initialLocation =
-                clientConfidentialForm?.location || 'Detecting current location...';
+            // FIX: Use empty string instead of a placeholder text while location is resolving.
+            // Generating an ID from "Detecting current location..." produces a meaningless acronym.
+            // We use LOCATION_PENDING as a sentinel so downstream code knows to defer ID generation.
+            const hasExplicitLocation = Boolean(
+                clientConfidentialForm?.location
+            );
+            const initialLocation = hasExplicitLocation
+                ? clientConfidentialForm!.location!
+                : LOCATION_PENDING;
 
+            // FIX: Only generate an initial client ID when we have a real location.
+            // If location is pending (geolocation not yet resolved), leave client as empty
+            // string and let the geolocation effect fill it in once the location resolves.
             const initialClient =
                 clientConfidentialForm?.client ||
-                generatePatientIdOptions(
-                    initialLocation,
-                    initialDate,
-                    1,
-                    1,
-                    usedPatientIds
-                )[0];
+                (hasExplicitLocation
+                    ? generatePatientIdOptions(
+                          initialLocation,
+                          initialDate,
+                          1,
+                          1,
+                          []
+                      )[0]
+                    : '');
 
-            const generatedOptions = generatePatientIdOptions(
-                initialLocation,
-                initialDate,
-                1,
-                PATIENT_ID_BATCH_SIZE,
-                usedPatientIds
-            );
+            const generatedOptions = hasExplicitLocation
+                ? generatePatientIdOptions(
+                      initialLocation,
+                      initialDate,
+                      1,
+                      PATIENT_ID_BATCH_SIZE,
+                      []
+                  )
+                : [];
 
             return {
                 client: initialClient,
                 userId: session.user.id!,
-                location: initialLocation,
+                location: hasExplicitLocation ? initialLocation : '',
                 date: initialDate,
                 affiliation:
                     clientConfidentialForm?.affiliation ||
@@ -274,7 +299,6 @@ const Unahon: React.FC<UnahonProps> = ({
 
     const goToPreviousSection = useCallback(() => {
         if (currentIndex === unahonSections.length) {
-            // If on confidential page, go back to last section
             setCurrentIndex(unahonSections.length - 1);
         } else {
             setCurrentIndex((prevIndex) =>
@@ -305,7 +329,7 @@ const Unahon: React.FC<UnahonProps> = ({
         }
     };
 
-        const handleSubmit = async () => {
+    const handleSubmit = async () => {
         try {
             await saveUnahonForm({ ...confidentialForm, checklist });
 
@@ -335,6 +359,7 @@ const Unahon: React.FC<UnahonProps> = ({
         await handleSubmit();
     };
 
+    // Fetch used patient IDs from the server on mount
     useEffect(() => {
         const fetchUsedPatientIds = async () => {
             try {
@@ -350,11 +375,20 @@ const Unahon: React.FC<UnahonProps> = ({
         fetchUsedPatientIds();
     }, []);
 
+    // FIX: Once usedPatientIds loads, regenerate the client ID — but only when:
+    //   1. No explicit client was provided via clientConfidentialForm, AND
+    //   2. We already have a real resolved location (not pending/empty)
     useEffect(() => {
         if (!usedPatientIds.length) return;
         if (clientConfidentialForm?.client) return;
 
         setConfidentialForm((prevForm) => {
+            // If location is still pending or empty, skip regeneration.
+            // The geolocation effect will handle it once the location resolves.
+            if (!prevForm.location || prevForm.location === LOCATION_PENDING) {
+                return prevForm;
+            }
+
             const nextClient = generatePatientIdOptions(
                 prevForm.location,
                 new Date(prevForm.date),
@@ -377,14 +411,14 @@ const Unahon: React.FC<UnahonProps> = ({
         });
     }, [usedPatientIds, clientConfidentialForm?.client]);
 
+    // Sync checklist and confidentialForm when props change (e.g. view-only mode)
     useEffect(() => {
         if (unahonChecklist) {
             setChecklist(unahonChecklist);
         }
 
         if (clientConfidentialForm) {
-            const location =
-                clientConfidentialForm.location || 'Detecting current location...';
+            const location = clientConfidentialForm.location || '';
 
             const date = clientConfidentialForm.date
                 ? new Date(clientConfidentialForm.date)
@@ -400,18 +434,28 @@ const Unahon: React.FC<UnahonProps> = ({
                     session.user.responderOrganization ||
                     '',
                 availablePatientIds:
-                clientConfidentialForm.availablePatientIds ||
-                generatePatientIdOptions(
-                    location,
-                    date,
-                    1,
-                    PATIENT_ID_BATCH_SIZE,
-                    usedPatientIds
-                ),
+                    clientConfidentialForm.availablePatientIds ||
+                    (location
+                        ? generatePatientIdOptions(
+                              location,
+                              date,
+                              1,
+                              PATIENT_ID_BATCH_SIZE,
+                              usedPatientIds
+                          )
+                        : []),
             }));
         }
-    }, [unahonChecklist, clientConfidentialForm, session.user.responderOrganization, usedPatientIds]);
+    }, [
+        unahonChecklist,
+        clientConfidentialForm,
+        session.user.responderOrganization,
+        usedPatientIds,
+    ]);
 
+    // Resolve the device's current location via geolocation and update the form.
+    // FIX: Only runs when no explicit location was provided. Once resolved, generates
+    // a proper patient ID based on the real location (not a placeholder string).
     useEffect(() => {
         if (clientConfidentialForm?.location) return;
         if (typeof window === 'undefined' || !navigator.geolocation) return;
@@ -425,33 +469,77 @@ const Unahon: React.FC<UnahonProps> = ({
                 const resolvedLocation =
                     shortenLocation(reverseGeocodeResult) ||
                     `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-                const currentDate = confidentialForm.date
-                    ? new Date(confidentialForm.date)
-                    : new Date();
 
-                const nextClient = generatePatientIdOptions(
-                    resolvedLocation,
-                    currentDate,
-                    1,
-                    1,
-                    usedPatientIds
-                )[0];
+                setConfidentialForm((prevForm) => {
+                    const currentDate = prevForm.date
+                        ? new Date(prevForm.date)
+                        : new Date();
 
-                setConfidentialForm((prevForm) => ({
-                    ...prevForm,
-                    location: resolvedLocation,
-                    client: nextClient,
-                    availablePatientIds: generatePatientIdOptions(
-                        resolvedLocation,
-                        currentDate,
-                        1,
-                        PATIENT_ID_BATCH_SIZE,
-                        usedPatientIds
-                    ),
-                }));
+                    // FIX: Only overwrite the client ID if one hasn't already been
+                    // explicitly provided. If it was already set (e.g. via clientConfidentialForm),
+                    // preserve it.
+                    const shouldUpdateClient = !clientConfidentialForm?.client;
+
+                    return {
+                        ...prevForm,
+                        location: resolvedLocation,
+                        ...(shouldUpdateClient
+                            ? {
+                                  client: generatePatientIdOptions(
+                                      resolvedLocation,
+                                      currentDate,
+                                      1,
+                                      1,
+                                      usedPatientIds
+                                  )[0],
+                                  availablePatientIds: generatePatientIdOptions(
+                                      resolvedLocation,
+                                      currentDate,
+                                      1,
+                                      PATIENT_ID_BATCH_SIZE,
+                                      usedPatientIds
+                                  ),
+                              }
+                            : {}),
+                    };
+                });
             },
             (error) => {
                 console.error('Error getting current location:', error);
+                // FIX: On geolocation failure, fall back to a generic location so
+                // the patient ID can still be generated rather than staying blank.
+                setConfidentialForm((prevForm) => {
+                    if (
+                        prevForm.location &&
+                        prevForm.location !== LOCATION_PENDING
+                    ) {
+                        return prevForm; // already resolved, nothing to do
+                    }
+
+                    const fallbackLocation = 'Unknown';
+                    const currentDate = prevForm.date
+                        ? new Date(prevForm.date)
+                        : new Date();
+
+                    return {
+                        ...prevForm,
+                        location: fallbackLocation,
+                        client: generatePatientIdOptions(
+                            fallbackLocation,
+                            currentDate,
+                            1,
+                            1,
+                            usedPatientIds
+                        )[0],
+                        availablePatientIds: generatePatientIdOptions(
+                            fallbackLocation,
+                            currentDate,
+                            1,
+                            PATIENT_ID_BATCH_SIZE,
+                            usedPatientIds
+                        ),
+                    };
+                });
             },
             {
                 enableHighAccuracy: true,
@@ -459,7 +547,8 @@ const Unahon: React.FC<UnahonProps> = ({
                 maximumAge: 300000,
             }
         );
-    }, [clientConfidentialForm?.location, confidentialForm.date, usedPatientIds]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [clientConfidentialForm?.location]);
 
     useEffect(() => {
         if (isLoading) return;
@@ -504,22 +593,27 @@ const Unahon: React.FC<UnahonProps> = ({
                 const nextDate =
                     id === 'date' ? new Date(value) : new Date(prevData.date);
 
-                const nextClient = generatePatientIdOptions(
-                    nextLocation,
-                    nextDate,
-                    1,
-                    1,
-                    usedPatientIds
-                )[0];
+                // FIX: Guard against generating an ID from an empty/pending location
+                // when the user manually edits the date before the location resolves.
+                if (nextLocation && nextLocation !== LOCATION_PENDING) {
+                    const nextClient = generatePatientIdOptions(
+                        nextLocation,
+                        nextDate,
+                        1,
+                        1,
+                        usedPatientIds
+                    )[0];
 
-                updatedData.client = nextClient;
-                updatedData.availablePatientIds = generatePatientIdOptions(
-                    nextLocation,
-                    nextDate,
-                    1,
-                    PATIENT_ID_BATCH_SIZE,
-                    usedPatientIds
-                );
+                    updatedData.client = nextClient;
+                    updatedData.availablePatientIds = generatePatientIdOptions(
+                        nextLocation,
+                        nextDate,
+                        1,
+                        PATIENT_ID_BATCH_SIZE,
+                        usedPatientIds
+                    );
+                }
+
                 return updatedData;
             }
 
@@ -544,7 +638,6 @@ const Unahon: React.FC<UnahonProps> = ({
 
     const isPreviousButtonDisabled = useCallback(() => {
         if (isViewOnly) return false;
-        // Previous button is now always enabled except when on first page and not view-only
         return currentIndex === 0;
     }, [currentIndex, isViewOnly]);
 
@@ -552,69 +645,69 @@ const Unahon: React.FC<UnahonProps> = ({
         <div className="min-h-screen bg-white">
             <div className="container mx-auto px-4 lg:px-6 py-8 max-w-[1400px]">
                 {/* Header Section */}
-                    <div className="mb-2 py-4 lg:py-6">
-                        {isViewOnly && (
-                            <div className="mb-4 p-4 bg-gradient-to-r from-red-50 to-red-100 border border-red-200 rounded-xl">
-                                <p className="text-xl font-bold text-red-600 text-center flex items-center justify-center gap-2">
-                                    <svg
-                                        className="w-6 h-6"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                        />
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                                        />
-                                    </svg>
-                                    VIEW ONLY MODE
-                                </p>
+                <div className="mb-2 py-4 lg:py-6">
+                    {isViewOnly && (
+                        <div className="mb-4 p-4 bg-gradient-to-r from-red-50 to-red-100 border border-red-200 rounded-xl">
+                            <p className="text-xl font-bold text-red-600 text-center flex items-center justify-center gap-2">
+                                <svg
+                                    className="w-6 h-6"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                    />
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                    />
+                                </svg>
+                                VIEW ONLY MODE
+                            </p>
+                        </div>
+                    )}
+
+                    {isReassessment && (
+                        <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-xl">
+                            <p className="text-xl font-bold text-blue-600 text-center flex items-center justify-center gap-2">
+                                <svg
+                                    className="w-6 h-6"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                                    />
+                                </svg>
+                                REASSESSMENT MODE
+                            </p>
+                        </div>
+                    )}
+
+                    <div className="text-center">
+                        <div className="max-w-[1320px] mx-auto">
+                            <div className="flex justify-center items-center mb-3 py-1">
+                                <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight text-red-700 leading-[1.15] pb-1">
+                                    UN<span className="italic">AHON</span>
+                                </h1>
                             </div>
-                        )}
 
-                        {/* Add reassessment indicator */}
-                        {isReassessment && (
-                            <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-xl">
-                                <p className="text-xl font-bold text-blue-600 text-center flex items-center justify-center gap-2">
-                                    <svg
-                                        className="w-6 h-6"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                                        />
-                                    </svg>
-                                    REASSESSMENT MODE
-                                </p>
-                            </div>
-                        )}
+                            <h2 className="text-lg sm:text-xl lg:text-[2rem] font-bold text-slate-800 leading-tight tracking-tight max-w-6xl mx-auto mt-2 whitespace-nowrap">
+                                BEHAVIOR OBSERVATION CHECKLIST FOR RESOURCE
+                                PRIORITIZATION
+                            </h2>
 
-                        <div className="text-center">
-                            <div className="max-w-[1320px] mx-auto">
-                                <div className="flex justify-center items-center mb-3 py-1">
-                                    <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight text-red-700 leading-[1.15] pb-1">
-                                        UN<span className="italic">AHON</span>
-                                    </h1>
-                                </div>
-
-                               <h2 className="text-lg sm:text-xl lg:text-[2rem] font-bold text-slate-800 leading-tight tracking-tight max-w-6xl mx-auto mt-2 whitespace-nowrap">
-                                    BEHAVIOR OBSERVATION CHECKLIST FOR RESOURCE PRIORITIZATION
-                                </h2>
-
-                                <div className="mt-10 max-w-[1320px] mx-auto space-y-5 text-slate-700">
+                            <div className="mt-10 max-w-[1320px] mx-auto space-y-5 text-slate-700">
                                 <Card className="w-full bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm rounded-2xl">
                                     <CardBody className="p-4 sm:p-5 lg:p-6 text-left">
                                         <div className="flex items-center gap-4">
@@ -636,17 +729,31 @@ const Unahon: React.FC<UnahonProps> = ({
 
                                             <div className="flex-1 space-y-2">
                                                 <p className="text-sm sm:text-base leading-relaxed text-slate-800">
-                                                    Isa itong gamit upang mahanap ang pinakanangangailangan ng serbisyo sa mga evacuation camps.{' '}
+                                                    Isa itong gamit upang
+                                                    mahanap ang
+                                                    pinakanangangailangan ng
+                                                    serbisyo sa mga evacuation
+                                                    camps.{' '}
                                                     <span className="font-bold text-red-600 underline decoration-red-300 underline-offset-2">
-                                                        Hindi ito gagamiting pangtukoy ng mga sakit-pangkaisipan
-                                                    </span>.
+                                                        Hindi ito gagamiting
+                                                        pangtukoy ng mga
+                                                        sakit-pangkaisipan
+                                                    </span>
+                                                    .
                                                 </p>
 
                                                 <p className="text-xs sm:text-sm italic leading-relaxed text-slate-600">
-                                                    (This is a tool that seeks to prioritize resources in cases wherein there is a great demand that exceeds current resources at evacuation camps.{' '}
+                                                    (This is a tool that seeks
+                                                    to prioritize resources in
+                                                    cases wherein there is a
+                                                    great demand that exceeds
+                                                    current resources at
+                                                    evacuation camps.{' '}
                                                     <span className="font-bold underline underline-offset-2">
-                                                        This is not a diagnostic tool
-                                                    </span>.)
+                                                        This is not a diagnostic
+                                                        tool
+                                                    </span>
+                                                    .)
                                                 </p>
                                             </div>
                                         </div>
@@ -674,105 +781,124 @@ const Unahon: React.FC<UnahonProps> = ({
 
                                             <div className="flex-1 space-y-2">
                                                 <p className="text-sm sm:text-base leading-relaxed text-slate-800">
-                                                    Ibatay ang sagot sa mga naobserbahang kilos.{' '}
+                                                    Ibatay ang sagot sa mga
+                                                    naobserbahang kilos.{' '}
                                                     <span className="font-bold text-red-600 underline decoration-red-300 underline-offset-2">
-                                                        Huwag tuwirang itanong ang mga ito sa mga Internally Displaced Persons o IDP
-                                                    </span>. Sagutan ang mga aytem nang sunod-sunod mula sa itaas hanggang sa ibaba. Kung OO ang sagot sa isa sa mga aytem, HUMINTO at isagawa ang interbensyon.
+                                                        Huwag tuwirang itanong
+                                                        ang mga ito sa mga
+                                                        Internally Displaced
+                                                        Persons o IDP
+                                                    </span>
+                                                    . Sagutan ang mga aytem nang
+                                                    sunod-sunod mula sa itaas
+                                                    hanggang sa ibaba. Kung OO
+                                                    ang sagot sa isa sa mga
+                                                    aytem, HUMINTO at isagawa
+                                                    ang interbensyon.
                                                 </p>
 
                                                 <p className="text-xs sm:text-sm italic leading-relaxed text-slate-600">
-                                                    (Base the answers on observable behaviors.{' '}
+                                                    (Base the answers on
+                                                    observable behaviors.{' '}
                                                     <span className="font-bold underline underline-offset-2">
-                                                        Do not directly ask these questions to the internally displaced person (IDP)
-                                                    </span>. Answer the items in order from top to bottom. If you answered YES to any of the items, STOP and do the intervention.)
+                                                        Do not directly ask
+                                                        these questions to the
+                                                        internally displaced
+                                                        person (IDP)
+                                                    </span>
+                                                    . Answer the items in order
+                                                    from top to bottom. If you
+                                                    answered YES to any of the
+                                                    items, STOP and do the
+                                                    intervention.)
                                                 </p>
                                             </div>
                                         </div>
                                     </CardBody>
                                 </Card>
                             </div>
-                            </div>
                         </div>
                     </div>
+                </div>
 
                 {/* Controls Section */}
-                    <div ref={assessmentTopRef} className="mb-4 px-2 mt-2">
-                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                            <div className="flex flex-col sm:flex-row gap-3 lg:ml-3 mb-6 lg:mb-0">
-                                <Button
-                                    onPress={onOpen}
-                                    className="font-semibold bg-gradient-to-r from-red-700 to-red-800 text-white shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-                                    size="lg"
-                                    startContent={
-                                        <svg
-                                            className="w-5 h-5"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                                            />
-                                        </svg>
-                                    }
-                                >
-                                    MHPSS Level Legend
-                                </Button>
-
-                                <Button
-                                    onPress={handleExitAssessment}
-                                    variant="bordered"
-                                    className="font-semibold border-2 border-red-300 text-red-700 hover:bg-red-50 transition-all duration-300"
-                                    size="lg"
-                                    startContent={
-                                        <svg
-                                            className="w-5 h-5"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                                            />
-                                        </svg>
-                                    }
-                                >
-                                    Exit Assessment
-                                </Button>
-                            </div>
-
-                            {/* Progress Indicator */}
-                            <div className="flex items-center gap-3 lg:mr-3">
-                                <span className="text-sm font-medium text-slate-600">
-                                    Progress:
-                                </span>
-                                <div className="flex items-center gap-2">
-                                    <div className="w-32 h-2 bg-slate-200 rounded-full overflow-hidden">
-                                        <div
-                                            className={`h-full transition-all duration-500 ${
-                                                isReassessment
-                                                    ? 'bg-gradient-to-r from-blue-500 to-blue-600'
-                                                    : 'bg-gradient-to-r from-emerald-500 to-teal-500'
-                                            }`}
-                                            style={{
-                                                width: `${((currentIndex + 1) / (unahonSections.length + 1)) * 100}%`,
-                                            }}
+                <div ref={assessmentTopRef} className="mb-4 px-2 mt-2">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                        <div className="flex flex-col sm:flex-row gap-3 lg:ml-3 mb-6 lg:mb-0">
+                            <Button
+                                onPress={onOpen}
+                                className="font-semibold bg-gradient-to-r from-red-700 to-red-800 text-white shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                                size="lg"
+                                startContent={
+                                    <svg
+                                        className="w-5 h-5"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                                         />
-                                    </div>
-                                    <span className="text-sm font-bold text-slate-700">
-                                        {currentIndex + 1}/
-                                        {unahonSections.length + 1}
-                                    </span>
+                                    </svg>
+                                }
+                            >
+                                MHPSS Level Legend
+                            </Button>
+
+                            <Button
+                                onPress={handleExitAssessment}
+                                variant="bordered"
+                                className="font-semibold border-2 border-red-300 text-red-700 hover:bg-red-50 transition-all duration-300"
+                                size="lg"
+                                startContent={
+                                    <svg
+                                        className="w-5 h-5"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                                        />
+                                    </svg>
+                                }
+                            >
+                                Exit Assessment
+                            </Button>
+                        </div>
+
+                        {/* Progress Indicator */}
+                        <div className="flex items-center gap-3 lg:mr-3">
+                            <span className="text-sm font-medium text-slate-600">
+                                Progress:
+                            </span>
+                            <div className="flex items-center gap-2">
+                                <div className="w-32 h-2 bg-slate-200 rounded-full overflow-hidden">
+                                    <div
+                                        className={`h-full transition-all duration-500 ${
+                                            isReassessment
+                                                ? 'bg-gradient-to-r from-blue-500 to-blue-600'
+                                                : 'bg-gradient-to-r from-emerald-500 to-teal-500'
+                                        }`}
+                                        style={{
+                                            width: `${((currentIndex + 1) / (unahonSections.length + 1)) * 100}%`,
+                                        }}
+                                    />
                                 </div>
+                                <span className="text-sm font-bold text-slate-700">
+                                    {currentIndex + 1}/
+                                    {unahonSections.length + 1}
+                                </span>
                             </div>
                         </div>
                     </div>
+                </div>
 
                 {/* Main Content */}
                 <Card className="mb-8 bg-white/70 backdrop-blur-sm shadow-lg border border-white/20">
@@ -788,7 +914,11 @@ const Unahon: React.FC<UnahonProps> = ({
                                         handleChecklistChange={
                                             handleChecklistChange
                                         }
-                                        competency={session.user.mhpssLevel ?? session.user.competency ?? null}
+                                        competency={
+                                            session.user.mhpssLevel ??
+                                            session.user.competency ??
+                                            null
+                                        }
                                         goToConfidentialPage={
                                             goToConfidentialPage
                                         }
@@ -799,7 +929,9 @@ const Unahon: React.FC<UnahonProps> = ({
                                     isViewOnly={isViewOnly}
                                     isReassessment={isReassessment}
                                     confidentialForm={confidentialForm}
-                                    handleConfidentialFormChange={handleConfidentialFormChange}
+                                    handleConfidentialFormChange={
+                                        handleConfidentialFormChange
+                                    }
                                     responder={responder}
                                 />
                             )
@@ -825,7 +957,6 @@ const Unahon: React.FC<UnahonProps> = ({
                                             key={rowIndex}
                                             className="space-y-4 py-4 border-b border-slate-100"
                                         >
-                                            {/* Question row skeleton */}
                                             <div className="flex gap-4 items-start">
                                                 <Skeleton className="w-8 h-6 rounded-lg flex-shrink-0"></Skeleton>
                                                 <div className="flex-1">
@@ -834,7 +965,6 @@ const Unahon: React.FC<UnahonProps> = ({
                                                 </div>
                                             </div>
 
-                                            {/* Checkbox row skeleton */}
                                             <div className="flex gap-8 ml-12">
                                                 <div className="flex items-center gap-2">
                                                     <Skeleton className="w-4 h-4 rounded"></Skeleton>
@@ -846,7 +976,6 @@ const Unahon: React.FC<UnahonProps> = ({
                                                 </div>
                                             </div>
 
-                                            {/* Intervention skeleton */}
                                             <div className="ml-12">
                                                 <Skeleton className="w-full h-8 rounded-lg"></Skeleton>
                                             </div>
@@ -1025,6 +1154,7 @@ const Unahon: React.FC<UnahonProps> = ({
                         handleExitAssessment();
                     }}
                 />
+
                 {/* Confirmation Modal */}
                 <UnahonConfirmModal
                     isOpen={showConfirmModal}

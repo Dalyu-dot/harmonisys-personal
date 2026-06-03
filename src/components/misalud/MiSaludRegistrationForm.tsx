@@ -1,12 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import {
-    Input,
-    Button,
-    Select,
-    SelectItem,
-} from '@heroui/react';
+import { Input, Button, Select, SelectItem } from '@heroui/react';
 
 type TeamOption = {
     id: string;
@@ -71,7 +66,8 @@ const MiSaludRegistrationForm = ({ onSuccess, onCancel }: Props) => {
                 age: Number(age),
                 address,
                 requestedRole,
-                teamName: requestedRole === 'TEAM_LEADER' ? teamName : undefined,
+                teamName:
+                    requestedRole === 'TEAM_LEADER' ? teamName : undefined,
                 teamId: requestedRole === 'TEAM_MEMBER' ? teamId : undefined,
             };
 
@@ -89,7 +85,9 @@ const MiSaludRegistrationForm = ({ onSuccess, onCancel }: Props) => {
                 throw new Error(data.error || 'Failed to submit registration');
             }
 
-            setSuccessMessage(data.message || 'Registration submitted successfully.');
+            setSuccessMessage(
+                data.message || 'Registration submitted successfully.'
+            );
 
             setTimeout(() => {
                 onSuccess?.();
@@ -97,9 +95,7 @@ const MiSaludRegistrationForm = ({ onSuccess, onCancel }: Props) => {
         } catch (error) {
             console.error(error);
             setError(
-                error instanceof Error
-                    ? error.message
-                    : 'Something went wrong.'
+                error instanceof Error ? error.message : 'Something went wrong.'
             );
         } finally {
             setIsSubmitting(false);
@@ -151,9 +147,7 @@ const MiSaludRegistrationForm = ({ onSuccess, onCancel }: Props) => {
                 variant="bordered"
             >
                 {roleOptions.map((role) => (
-                    <SelectItem key={role.key}>
-                        {role.label}
-                    </SelectItem>
+                    <SelectItem key={role.key}>{role.label}</SelectItem>
                 ))}
             </Select>
 
@@ -200,9 +194,7 @@ const MiSaludRegistrationForm = ({ onSuccess, onCancel }: Props) => {
                     variant="bordered"
                 >
                     {approvedTeams.map((team) => (
-                        <SelectItem key={team.id}>
-                            {team.name}
-                        </SelectItem>
+                        <SelectItem key={team.id}>{team.name}</SelectItem>
                     ))}
                 </Select>
             )}

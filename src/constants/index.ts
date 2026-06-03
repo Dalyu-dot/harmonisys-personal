@@ -117,44 +117,42 @@ export const headerLinks = [
 ];
 
 export const carouselElements = [
-  {
-    type: 'Project',
-    title: 'Incident Reporting System',
-    description: `This is an application that can be used by the staff of UP Manila DRRM-H to improve the ERT skills and protocol. It automates reporting processes during emergency drills and helps generate structured summaries for better evaluation and continuous improvement.`,
-    url: '/overview/irs',
-    icon: 'file',
-  },
-  {
-    type: 'Project',
-    title: 'REDAS',
-    description: `REDAS (Rapid Earthquake Damage Assessment System) is a tool designed to provide real-time data and simulations following an earthquake. It assists local government units and disaster responders in assessing hazard impacts and strengthening preparedness and response strategies.`,
-    url: '/overview/redas',
-    icon: 'waves',
-  },
-  {
-    type: 'Project',
-    title: 'Unahon',
-    description: `Unahon, derived from the Bisaya word meaning “to prioritize,” is a tool that helps responders prioritize mental health support. It assists camp management in identifying and allocating resources to internally displaced persons (IDPs) showing signs of distress after disasters.`,
-    url: '/overview/unahon',
-    icon: 'heart',
-  },
-  {
-    type: 'Project',
-    title: 'Mi Salud',
-    description: `A mobile phone (android) application that enables the different Responders' Teams to monitor the fitness of the Responders' mental, emotional, and physical conditions, before, during and after rescuing/ responding to the victims involved in disasters or calamities, natural or man- made.`,
-    url: '/overview/misalud',
-    icon: 'activity',
-  },
-  {
-    type: 'Project',
-    title: 'HazardHunter',
-    description: `The HazardHunter Ready to Rebuild web app is an automated planning tool designed to enhance Disaster Risk Reduction and Management (DRRM) processes by helping government agencies, especially Local Government Units (LGUs), plan efficiently, work smarter, and rebuild faster.`,
-    url: '/overview/hazardhunter',
-    icon: 'map',
-  },
+    {
+        type: 'Project',
+        title: 'Incident Reporting System',
+        description: `This is an application that can be used by the staff of UP Manila DRRM-H to improve the ERT skills and protocol. It automates reporting processes during emergency drills and helps generate structured summaries for better evaluation and continuous improvement.`,
+        url: '/overview/irs',
+        icon: 'file',
+    },
+    {
+        type: 'Project',
+        title: 'REDAS',
+        description: `REDAS (Rapid Earthquake Damage Assessment System) is a tool designed to provide real-time data and simulations following an earthquake. It assists local government units and disaster responders in assessing hazard impacts and strengthening preparedness and response strategies.`,
+        url: '/overview/redas',
+        icon: 'waves',
+    },
+    {
+        type: 'Project',
+        title: 'Unahon',
+        description: `Unahon, derived from the Bisaya word meaning “to prioritize,” is a tool that helps responders prioritize mental health support. It assists camp management in identifying and allocating resources to internally displaced persons (IDPs) showing signs of distress after disasters.`,
+        url: '/overview/unahon',
+        icon: 'heart',
+    },
+    {
+        type: 'Project',
+        title: 'Mi Salud',
+        description: `A mobile phone (android) application that enables the different Responders' Teams to monitor the fitness of the Responders' mental, emotional, and physical conditions, before, during and after rescuing/ responding to the victims involved in disasters or calamities, natural or man- made.`,
+        url: '/overview/misalud',
+        icon: 'activity',
+    },
+    {
+        type: 'Project',
+        title: 'HazardHunter',
+        description: `The HazardHunter Ready to Rebuild web app is an automated planning tool designed to enhance Disaster Risk Reduction and Management (DRRM) processes by helping government agencies, especially Local Government Units (LGUs), plan efficiently, work smarter, and rebuild faster.`,
+        url: '/overview/hazardhunter',
+        icon: 'map',
+    },
 ];
-
-
 
 export const features = [
     {

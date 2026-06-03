@@ -40,7 +40,10 @@ export async function GET() {
             },
         });
 
-        const latestRequestByUser = new Map<string, (typeof requests)[number]>();
+        const latestRequestByUser = new Map<
+            string,
+            (typeof requests)[number]
+        >();
 
         for (const request of requests) {
             if (!latestRequestByUser.has(request.userId)) {

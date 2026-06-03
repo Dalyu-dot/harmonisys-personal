@@ -23,39 +23,43 @@ import nodemailer from 'nodemailer';
 let _transporter: nodemailer.Transporter | null = null;
 
 function getTransporter() {
-  if (_transporter) return _transporter;
+    if (_transporter) return _transporter;
 
-  _transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST!,
-    port: Number(process.env.SMTP_PORT ?? 587),
-    secure: process.env.SMTP_SECURE === 'true',
-    auth: {
-      user: process.env.SMTP_USER!,
-      pass: process.env.SMTP_PASS!,
-    },
-  });
+    _transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST!,
+        port: Number(process.env.SMTP_PORT ?? 587),
+        secure: process.env.SMTP_SECURE === 'true',
+        auth: {
+            user: process.env.SMTP_USER!,
+            pass: process.env.SMTP_PASS!,
+        },
+    });
 
-  return _transporter;
+    return _transporter;
 }
 
 // ─── Helpers (lazy — read env vars at call time, not module load time) ───────
 
 function getFrom() {
-  return process.env.EMAIL_FROM ?? process.env.SMTP_USER ?? 'no-reply@harmonisys.ph';
+    return (
+        process.env.EMAIL_FROM ??
+        process.env.SMTP_USER ??
+        'no-reply@harmonisys.ph'
+    );
 }
 
 function getAdminEmail() {
-  return process.env.DRRM_H_EMAIL ?? 'drrm-h@harmonisys.ph';
+    return process.env.DRRM_H_EMAIL ?? 'drrm-h@harmonisys.ph';
 }
 
 function getAppUrl() {
-  return process.env.NEXT_PUBLIC_APP_URL ?? 'https://harmonisys.ph';
+    return process.env.NEXT_PUBLIC_APP_URL ?? 'https://harmonisys.ph';
 }
 
 // ─── Shared HTML wrapper ─────────────────────────────────────────────────────
 
 function htmlWrapper(body: string) {
-  return `
+    return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -97,27 +101,27 @@ function htmlWrapper(body: string) {
 // ─── 1. Email TO ADMIN when user submits a role request ─────────────────────
 
 export async function sendRoleRequestToAdmin(payload: {
-  userName: string | null;
-  userEmail: string;
-  toRole: string;
-  requestedMhpssLevel?: string | null;
-  requestedOrganization?: string | null;
-  requestedCertUrl?: string | null;
-  requestId: string;
+    userName: string | null;
+    userEmail: string;
+    toRole: string;
+    requestedMhpssLevel?: string | null;
+    requestedOrganization?: string | null;
+    requestedCertUrl?: string | null;
+    requestId: string;
 }) {
-  const {
-    userName,
-    userEmail,
-    toRole,
-    requestedMhpssLevel,
-    requestedOrganization,
-    requestedCertUrl,
-    requestId,
-  } = payload;
+    const {
+        userName,
+        userEmail,
+        toRole,
+        requestedMhpssLevel,
+        requestedOrganization,
+        requestedCertUrl,
+        requestId,
+    } = payload;
 
-  const adminUrl = `${getAppUrl()}/admin/users`;
+    const adminUrl = `${getAppUrl()}/admin/users`;
 
-  const html = htmlWrapper(`
+    const html = htmlWrapper(`
     <p>Hello, DRRM-H Admin,</p>
     <p>
       A <strong>Standard User</strong> has submitted a request to upgrade
@@ -141,24 +145,24 @@ export async function sendRoleRequestToAdmin(payload: {
     </div>
   `);
 
-  await getTransporter().sendMail({
-    from: getFrom(),
-    to: getAdminEmail(),
-    subject: `[HARMONISYS] Role Upgrade Request — ${userName ?? userEmail}`,
-    html,
-  });
+    await getTransporter().sendMail({
+        from: getFrom(),
+        to: getAdminEmail(),
+        subject: `[HARMONISYS] Role Upgrade Request — ${userName ?? userEmail}`,
+        html,
+    });
 }
 
 // ─── 2. Email TO USER when admin approves ───────────────────────────────────
 
 export async function sendRoleApprovedEmail(payload: {
-  userName: string | null;
-  userEmail: string;
-  newRole: string;
+    userName: string | null;
+    userEmail: string;
+    newRole: string;
 }) {
-  const { userName, userEmail, newRole } = payload;
+    const { userName, userEmail, newRole } = payload;
 
-  const html = htmlWrapper(`
+    const html = htmlWrapper(`
     <p>Hello ${userName ?? 'there'},</p>
     <p>
       Great news! Your request to upgrade to
@@ -180,25 +184,25 @@ export async function sendRoleApprovedEmail(payload: {
     </p>
   `);
 
-  await getTransporter().sendMail({
-    from: getFrom(),
-    to: userEmail,
-    subject: `[HARMONISYS] Your Role Upgrade Request Was Approved 🎉`,
-    html,
-  });
+    await getTransporter().sendMail({
+        from: getFrom(),
+        to: userEmail,
+        subject: `[HARMONISYS] Your Role Upgrade Request Was Approved 🎉`,
+        html,
+    });
 }
 
 // ─── 3. Email TO USER when admin rejects ────────────────────────────────────
 
 export async function sendRoleRejectedEmail(payload: {
-  userName: string | null;
-  userEmail: string;
-  toRole: string;
-  reason?: string | null;
+    userName: string | null;
+    userEmail: string;
+    toRole: string;
+    reason?: string | null;
 }) {
-  const { userName, userEmail, toRole, reason } = payload;
+    const { userName, userEmail, toRole, reason } = payload;
 
-  const html = htmlWrapper(`
+    const html = htmlWrapper(`
     <p>Hello ${userName ?? 'there'},</p>
     <p>
       We have reviewed your request to upgrade to <strong>${toRole}</strong>.
@@ -207,9 +211,9 @@ export async function sendRoleRejectedEmail(payload: {
     </p>
 
     ${
-      reason
-        ? `<div class="info-box"><p><strong>Reason:</strong> ${reason}</p></div>`
-        : ''
+        reason
+            ? `<div class="info-box"><p><strong>Reason:</strong> ${reason}</p></div>`
+            : ''
     }
 
     <p>
@@ -222,10 +226,10 @@ export async function sendRoleRejectedEmail(payload: {
     </div>
   `);
 
-  await getTransporter().sendMail({
-    from: getFrom(),
-    to: userEmail,
-    subject: `[HARMONISYS] Your Role Upgrade Request Was Not Approved`,
-    html,
-  });
+    await getTransporter().sendMail({
+        from: getFrom(),
+        to: userEmail,
+        subject: `[HARMONISYS] Your Role Upgrade Request Was Not Approved`,
+        html,
+    });
 }

@@ -1,15 +1,15 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import {
-    Card,
-    CardBody,
-    CardHeader,
-    Button,
-    Skeleton,
-} from '@heroui/react';
+import { Card, CardBody, CardHeader, Button, Skeleton } from '@heroui/react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ClipboardList, HeartPulse, User, CalendarDays } from 'lucide-react';
+import {
+    ArrowLeft,
+    ClipboardList,
+    HeartPulse,
+    User,
+    CalendarDays,
+} from 'lucide-react';
 
 type QuestionResponse = {
     id: string;
@@ -49,25 +49,25 @@ const formatDate = (value?: string | null) => {
 
 const MiSaludSubmissionDetailsClient = ({ submissionId }: Props) => {
     const router = useRouter();
-    const {
-        data: submission = null,
-        isLoading: loading,
-    } = useQuery<SubmissionDetails | null>({
-        queryKey: ['misalud-submission-details', submissionId],
-        queryFn: async () => {
-            const response = await fetch(
-                `/api/misalud/admin/submissions/${submissionId}`
-            );
-            const result = await response.json();
+    const { data: submission = null, isLoading: loading } =
+        useQuery<SubmissionDetails | null>({
+            queryKey: ['misalud-submission-details', submissionId],
+            queryFn: async () => {
+                const response = await fetch(
+                    `/api/misalud/admin/submissions/${submissionId}`
+                );
+                const result = await response.json();
 
-            if (!response.ok) {
-                throw new Error(result.error || 'Failed to fetch submission');
-            }
+                if (!response.ok) {
+                    throw new Error(
+                        result.error || 'Failed to fetch submission'
+                    );
+                }
 
-            return result.submission || null;
-        },
-        staleTime: 5 * 60 * 1000,
-    });
+                return result.submission || null;
+            },
+            staleTime: 5 * 60 * 1000,
+        });
 
     return (
         <div className="min-h-screen bg-emerald-50">
@@ -81,15 +81,20 @@ const MiSaludSubmissionDetailsClient = ({ submissionId }: Props) => {
                                         Assess Health Details
                                     </h1>
                                     <p className="text-white/85 text-lg">
-                                        View a full submitted wellness assessment
+                                        View a full submitted wellness
+                                        assessment
                                     </p>
                                 </div>
 
                                 <Button
                                     variant="light"
-                                    startContent={<ArrowLeft className="w-4 h-4" />}
+                                    startContent={
+                                        <ArrowLeft className="w-4 h-4" />
+                                    }
                                     className="h-12 px-6 bg-white/15 text-white border border-white/25 backdrop-blur-sm rounded-xl"
-                                    onPress={() => router.push('/misalud/manage')}
+                                    onPress={() =>
+                                        router.push('/misalud/manage')
+                                    }
                                 >
                                     Back to Mi Salud Admin
                                 </Button>
@@ -122,7 +127,8 @@ const MiSaludSubmissionDetailsClient = ({ submissionId }: Props) => {
                                         Submission Information
                                     </h2>
                                     <p className="text-slate-600">
-                                        Overview of the submitted Assess Health form
+                                        Overview of the submitted Assess Health
+                                        form
                                     </p>
                                 </div>
                             </CardHeader>
@@ -212,7 +218,8 @@ const MiSaludSubmissionDetailsClient = ({ submissionId }: Props) => {
                                             className="rounded-2xl border border-emerald-100 bg-emerald-50/40 p-4"
                                         >
                                             <p className="text-sm font-semibold text-emerald-800 mb-2">
-                                                {response.questionId}. {response.questionText}
+                                                {response.questionId}.{' '}
+                                                {response.questionText}
                                             </p>
                                             <p className="text-slate-700 font-medium">
                                                 {response.selectedOption}

@@ -34,7 +34,8 @@ export async function POST(req: Request) {
             return NextResponse.json(
                 {
                     success: false,
-                    message: 'Invalid file type. Allowed: PDF, JPG, PNG, DOC, DOCX.',
+                    message:
+                        'Invalid file type. Allowed: PDF, JPG, PNG, DOC, DOCX.',
                 },
                 { status: 400 }
             );
@@ -61,7 +62,8 @@ export async function POST(req: Request) {
         return NextResponse.json(
             {
                 success: false,
-                message: error?.message ?? 'Something went wrong during upload.',
+                message:
+                    error?.message ?? 'Something went wrong during upload.',
             },
             { status: 500 }
         );

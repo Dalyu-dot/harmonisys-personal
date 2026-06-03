@@ -54,7 +54,10 @@ export async function GET() {
                       { createdAt: { gte: twelveMonthsAgo } },
                       {
                           OR: userAliases.map((alias) => ({
-                              reporter: { equals: alias, mode: 'insensitive' as const },
+                              reporter: {
+                                  equals: alias,
+                                  mode: 'insensitive' as const,
+                              },
                           })),
                       },
                   ],
@@ -67,7 +70,10 @@ export async function GET() {
                       { createdAt: { gte: sevenDaysAgo } },
                       {
                           OR: userAliases.map((alias) => ({
-                              reporter: { equals: alias, mode: 'insensitive' as const },
+                              reporter: {
+                                  equals: alias,
+                                  mode: 'insensitive' as const,
+                              },
                           })),
                       },
                   ],
@@ -83,11 +89,17 @@ export async function GET() {
 
         const submissionWhere = isAdmin
             ? { createdAt: { gte: twelveMonthsAgo } }
-            : ({ userId: currentUser.id, createdAt: { gte: twelveMonthsAgo } } as any);
+            : ({
+                  userId: currentUser.id,
+                  createdAt: { gte: twelveMonthsAgo },
+              } as any);
 
         const submissionRecentWhere = isAdmin
             ? { createdAt: { gte: sevenDaysAgo } }
-            : ({ userId: currentUser.id, createdAt: { gte: sevenDaysAgo } } as any);
+            : ({
+                  userId: currentUser.id,
+                  createdAt: { gte: sevenDaysAgo },
+              } as any);
 
         // ── Monthly raw records ──────────────────────────────────────────────
 
@@ -244,7 +256,11 @@ export async function GET() {
                 tool: 'MiSalud',
             })),
         ]
-            .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+            .sort(
+                (a, b) =>
+                    new Date(b.timestamp).getTime() -
+                    new Date(a.timestamp).getTime()
+            )
             .slice(0, 20);
 
         // ── Response ─────────────────────────────────────────────────────────
@@ -302,7 +318,11 @@ export async function GET() {
     } catch (error) {
         console.error('Error fetching dashboard charts data:', error);
         return NextResponse.json(
-            { success: false, error: 'Failed to fetch dashboard charts data', data: null },
+            {
+                success: false,
+                error: 'Failed to fetch dashboard charts data',
+                data: null,
+            },
             { status: 500 }
         );
     }

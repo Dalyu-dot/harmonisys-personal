@@ -42,7 +42,9 @@ export function useNotifications() {
         },
         onMutate: async (id) => {
             await qc.cancelQueries({ queryKey: ['notifications'] });
-            const prev = qc.getQueryData<NotificationsResponse>(['notifications']);
+            const prev = qc.getQueryData<NotificationsResponse>([
+                'notifications',
+            ]);
             qc.setQueryData<NotificationsResponse>(['notifications'], (old) => {
                 if (!old) return old;
                 return {
@@ -102,7 +104,9 @@ export function usePendingRequestsCount() {
     return useQuery<{ count: number }>({
         queryKey: ['misalud-pending-count'],
         queryFn: async () => {
-            const res = await fetch('/api/misalud/requests?status=PENDING&countOnly=true');
+            const res = await fetch(
+                '/api/misalud/requests?status=PENDING&countOnly=true'
+            );
             if (!res.ok) throw new Error('Failed');
             return res.json();
         },

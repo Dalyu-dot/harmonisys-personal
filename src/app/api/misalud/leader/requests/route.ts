@@ -29,7 +29,9 @@ export async function GET() {
 
         if (!leaderMembership) {
             return NextResponse.json(
-                { error: 'Only approved Team Leaders can access these requests' },
+                {
+                    error: 'Only approved Team Leaders can access these requests',
+                },
                 { status: 403 }
             );
         }

@@ -26,7 +26,6 @@ const EDMTrainings = () => {
         <div
             ref={scrollRef}
             className="h-64 overflow-y-auto border border-blue-100 rounded-lg p-0 bg-gradient-to-br from-blue-50/70 to-sky-50/70 backdrop-blur-sm relative"
-
         >
             {loading ? (
                 <div className="text-center text-slate-500 py-8">

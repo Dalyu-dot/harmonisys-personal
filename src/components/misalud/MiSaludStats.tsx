@@ -113,8 +113,8 @@ const MiSaludStats = ({
                                             {selectedView === 'events'
                                                 ? 'Teams Deployed'
                                                 : isArchiveView
-                                                ? 'Archived Teams'
-                                                : 'Active Teams'}
+                                                  ? 'Archived Teams'
+                                                  : 'Active Teams'}
                                         </h3>
                                         <p className="text-sm text-slate-500">
                                             {selectedView === 'events'
@@ -128,18 +128,18 @@ const MiSaludStats = ({
                                         {selectedView === 'events'
                                             ? filteredEvents.length
                                             : isArchiveView
-                                            ? teamsData.length
-                                            : teamGroups.length}
+                                              ? teamsData.length
+                                              : teamGroups.length}
                                     </span>
                                     <span className="text-lg text-slate-500 ml-2">
-                                        {selectedView === 'events' ? 'teams' : 'teams'}
+                                        {selectedView === 'events'
+                                            ? 'teams'
+                                            : 'teams'}
                                     </span>
                                 </div>
                                 <div className="w-full bg-slate-200 rounded-full h-2">
                                     <div
-                                        className={`h-2 rounded-full w-full transition-all duration-500 ${
-                                            'bg-gradient-to-r from-blue-500 to-blue-600'
-                                        }`}
+                                        className={`h-2 rounded-full w-full transition-all duration-500 ${'bg-gradient-to-r from-blue-500 to-blue-600'}`}
                                     ></div>
                                 </div>
                             </CardBody>
@@ -181,10 +181,8 @@ const MiSaludStats = ({
                                     </span>
                                 </div>
                                 <div className="w-full bg-slate-200 rounded-full h-2">
-  <div
-    className="h-2 rounded-full w-full transition-all duration-500 bg-gradient-to-r from-[#7B122F] to-[#A3153D]"
-  ></div>
-</div>
+                                    <div className="h-2 rounded-full w-full transition-all duration-500 bg-gradient-to-r from-[#7B122F] to-[#A3153D]"></div>
+                                </div>
                             </CardBody>
                         </Card>
 
@@ -193,14 +191,10 @@ const MiSaludStats = ({
                             <CardBody className="p-6">
                                 <div className="flex items-center gap-4 mb-4">
                                     <div
-                                        className={`p-3 rounded-xl ${
-                                            'bg-green-100'
-                                        }`}
+                                        className={`p-3 rounded-xl ${'bg-green-100'}`}
                                     >
                                         <ClockIcon
-                                            className={`w-8 h-8 ${
-                                                'text-green-600'
-                                            }`}
+                                            className={`w-8 h-8 ${'text-green-600'}`}
                                         />
                                     </div>
                                     <div>
@@ -224,9 +218,7 @@ const MiSaludStats = ({
                                 </div>
                                 <div className="w-full bg-slate-200 rounded-full h-2">
                                     <div
-                                        className={`h-2 rounded-full w-full transition-all duration-500 ${
-                                            'bg-gradient-to-r from-green-500 to-green-600'
-                                        }`}
+                                        className={`h-2 rounded-full w-full transition-all duration-500 ${'bg-gradient-to-r from-green-500 to-green-600'}`}
                                     ></div>
                                 </div>
                             </CardBody>

@@ -11,7 +11,8 @@ const UnahonPage = async () => {
     return (
         <div>
             <Header session={session} />
-            {(session?.user.role === 'RESPONDER' || session?.user.role === 'ADMIN') &&
+            {(session?.user.role === 'RESPONDER' ||
+                session?.user.role === 'ADMIN') &&
             session?.user.mhpssLevel ? (
                 <UnahonForm
                     session={session}

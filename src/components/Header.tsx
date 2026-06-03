@@ -328,8 +328,8 @@ const Header: React.FC<HeaderProps> = ({ session }) => {
                                                     style={toolsCssVars}
                                                     className="min-w-[280px] p-2 bg-white/95 backdrop-blur-md shadow-xl border border-gray-200 rounded-2xl"
                                                 >
-                                                    <DropdownSection title="DRRM Tools">
-                                                        {footerLinks[1].links.map(
+                                                    <DropdownSection title="DRRM-H Tools">
+                                                        {footerLinks[0].links.map(
                                                             (item) => {
                                                                 const icon =
                                                                     toolIconMap[

@@ -35,7 +35,9 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
         if (!leaderMembership) {
             return NextResponse.json(
-                { error: 'Only approved Team Leaders can review these requests' },
+                {
+                    error: 'Only approved Team Leaders can review these requests',
+                },
                 { status: 403 }
             );
         }

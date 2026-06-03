@@ -2,7 +2,12 @@
 
 import { prisma } from '@/lib/prisma';
 
-export const savePlaceCoordinates = async (place: string, count: number, lat: number, lng: number) => {
+export const savePlaceCoordinates = async (
+    place: string,
+    count: number,
+    lat: number,
+    lng: number
+) => {
     try {
         await prisma.placeCoordinate.upsert({
             where: { place },

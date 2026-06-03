@@ -22,34 +22,36 @@ const MarkerLegend = ({ isVisible }: { isVisible: boolean }) => {
                         Number of trainings per location
                     </p>
                     <div className="space-y-2">
-    {legendItems.map((item, index) => {
-        const emojiMap: Record<string, string> = {
-            '#ef4444': '🔴',
-            '#f97316': '🟠',
-            '#eab308': '🟡',
-            '#22c55e': '🟢',
-            '#3b82f6': '🔵',
-        };
+                        {legendItems.map((item, index) => {
+                            const emojiMap: Record<string, string> = {
+                                '#ef4444': '🔴',
+                                '#f97316': '🟠',
+                                '#eab308': '🟡',
+                                '#22c55e': '🟢',
+                                '#3b82f6': '🔵',
+                            };
 
-        return (
-            <div
-                key={index}
-                className="flex justify-between items-center text-sm"
-            >
-                {/* Left side */}
-                <div className="flex items-center gap-2">
-                    <span>{emojiMap[item.color]}</span>
-                    <span className="font-normal">{item.desc}</span>
-                </div>
+                            return (
+                                <div
+                                    key={index}
+                                    className="flex justify-between items-center text-sm"
+                                >
+                                    {/* Left side */}
+                                    <div className="flex items-center gap-2">
+                                        <span>{emojiMap[item.color]}</span>
+                                        <span className="font-normal">
+                                            {item.desc}
+                                        </span>
+                                    </div>
 
-                {/* Right side */}
-                <span className="text-gray-600 font-normal">
-                    {item.label}
-                </span>
-            </div>
-        );
-    })}
-</div>
+                                    {/* Right side */}
+                                    <span className="text-gray-600 font-normal">
+                                        {item.label}
+                                    </span>
+                                </div>
+                            );
+                        })}
+                    </div>
                 </CardBody>
             </Card>
         </div>

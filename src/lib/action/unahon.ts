@@ -132,6 +132,7 @@ export const getUnahonFormsGroupedByClient = async (
                 responder: string;
             }[];
         } = {};
+
         for (const form of unahonForms) {
             // Convert checklist data to the expected structure
             const checklistData: Checklist = {};
@@ -268,23 +269,39 @@ export const getUnahonFormsSummary = async (): Promise<UnahonSummary> => {
                 unahonSummary.reassessment++;
             }
 
-            for (const item of form.checklist) {
+            // unahonSections order (from @/constants):
+            //   index 0 = green
+            //   index 1 = yellow
+            //   index 2 = red
+            //
+            // Sort descending (2 → 1 → 0) so red is evaluated first.
+            // This ensures a form that triggered red is counted as red,
+            // not accidentally counted as green just because its category 0
+            // (green) item appears first in the DB result.
+            const sortedChecklist = [...form.checklist].sort(
+                (a, b) => b.category - a.category
+            );
+
+            for (const item of sortedChecklist) {
                 if (item.agree && !item.disagree) {
                     switch (item.category) {
-                        case 0:
+                        case 2:
+                            // category 2 = red section (index 2 in unahonSections)
                             unahonSummary.redCount++;
                             break;
                         case 1:
+                            // category 1 = yellow section
                             unahonSummary.yellowCount++;
                             break;
-                        case 2:
+                        case 0:
+                            // category 0 = green section
                             unahonSummary.greenCount++;
                             break;
                         default:
                             break;
                     }
                     incremented = true;
-                    break;
+                    break; // stop at the first (highest-priority) triggered item
                 }
             }
 

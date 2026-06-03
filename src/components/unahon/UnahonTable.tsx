@@ -69,13 +69,9 @@ const UnahonTable: React.FC<UnahonTableProps> = ({
     const isDisagreeSequentiallyEnabled = useCallback(
         (rowNumber: number) => {
             if (isViewOnly) return false;
-
-            // First row is always allowed
             if (rowNumber === 1) return true;
 
-            const previousRow = checklist[index][rowNumber - 1];
-
-            // Enable current "No" only if previous row is already answered "No"
+            const previousRow = checklist[index]?.[rowNumber - 1];
             return previousRow?.[1] === true;
         },
         [checklist, index, isViewOnly]
@@ -93,7 +89,8 @@ const UnahonTable: React.FC<UnahonTableProps> = ({
                             >
                                 <div className="flex items-center justify-center h-full">
                                     <div className="text-white font-bold text-lg transform -rotate-90 whitespace-nowrap">
-                                        {currentSection.color.toUpperCase()} LEVEL
+                                        {currentSection.color.toUpperCase()}{' '}
+                                        LEVEL
                                     </div>
                                 </div>
                             </TableCell>
@@ -131,7 +128,10 @@ const UnahonTable: React.FC<UnahonTableProps> = ({
                             <div className="flex justify-center">
                                 <Checkbox
                                     isDisabled={isViewOnly}
-                                    isSelected={checklist[index][row.number][0]}
+                                    isSelected={
+                                        checklist[index]?.[row.number]?.[0] ??
+                                        false
+                                    }
                                     onValueChange={(isSelected) =>
                                         handleCheckboxChange(
                                             row.number,
@@ -148,6 +148,7 @@ const UnahonTable: React.FC<UnahonTableProps> = ({
                             </div>
                         </TableCell>
                     );
+
                 case 'disagree':
                     return (
                         <TableCell className="p-4 text-center">
@@ -156,12 +157,19 @@ const UnahonTable: React.FC<UnahonTableProps> = ({
                                     isDisabled={
                                         isViewOnly ||
                                         isLastAssessmentSection ||
-                                        (
-                                            !isDisagreeSequentiallyEnabled(row.number) &&
-                                            !checklist[index][row.number][1]
-                                        )
+                                        (!isDisagreeSequentiallyEnabled(
+                                            row.number
+                                        ) &&
+                                            !(
+                                                checklist[index]?.[
+                                                    row.number
+                                                ]?.[1] ?? false
+                                            ))
                                     }
-                                    isSelected={checklist[index][row.number][1]}
+                                    isSelected={
+                                        checklist[index]?.[row.number]?.[1] ??
+                                        false
+                                    }
                                     onValueChange={(isSelected) =>
                                         handleCheckboxChange(
                                             row.number,

@@ -510,7 +510,8 @@ const TeamDetailPage = ({ teamName }: TeamPageProps) => {
                                                 color="success"
                                                 variant="flat"
                                             >
-                                                {submission.responses.length} responses
+                                                {submission.responses.length}{' '}
+                                                responses
                                             </Chip>
                                         </div>
 
@@ -521,7 +522,9 @@ const TeamDetailPage = ({ teamName }: TeamPageProps) => {
                                                     <span>Submitted:</span>
                                                 </div>
                                                 <span className="font-medium">
-                                                    {formatDate(submission.date)}
+                                                    {formatDate(
+                                                        submission.date
+                                                    )}
                                                 </span>
                                             </div>
 
@@ -531,7 +534,9 @@ const TeamDetailPage = ({ teamName }: TeamPageProps) => {
                                                     <span>Created:</span>
                                                 </div>
                                                 <span className="font-medium">
-                                                    {formatDate(submission.createdAt)}
+                                                    {formatDate(
+                                                        submission.createdAt
+                                                    )}
                                                 </span>
                                             </div>
                                         </div>
@@ -579,7 +584,13 @@ const TeamDetailPage = ({ teamName }: TeamPageProps) => {
 
                             <p className="pt-1 text-sm text-gray-600 flex items-center gap-2">
                                 <BarChart3 className="w-4 h-4 text-emerald-600" />
-                                Based on {chartData.reduce((sum, item) => sum + item.total, 0)} total responses across {chartData.length} questions
+                                Based on{' '}
+                                {chartData.reduce(
+                                    (sum, item) => sum + item.total,
+                                    0
+                                )}{' '}
+                                total responses across {chartData.length}{' '}
+                                questions
                             </p>
                         </div>
                     </CardBody>
@@ -678,119 +689,145 @@ const TeamDetailPage = ({ teamName }: TeamPageProps) => {
 
                 {/* Question Details */}
                 {chartData.length > 0 && (
-    <div className="mb-8">
-        <div className="mb-4 flex items-center gap-2">
-            <Activity className="w-5 h-5 text-emerald-600" />
-            <h2 className="text-xl font-semibold text-gray-900">
-                Detailed Question Analysis
-            </h2>
-        </div>
-
-        <div className="space-y-4">
-            {chartData.map((item, index) => (
-                <Card key={index} className="border border-gray-200 shadow-sm">
-                    <CardBody>
-                        <h3 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
-                            <Target className="w-4 h-4 text-emerald-600" />
-                            {item.question}: {item.questionText}
-                        </h3>
-
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div className="text-center p-3 bg-green-50 rounded-lg">
-                                <div className="flex items-center justify-center gap-1 mb-1">
-                                    <CheckCircle className="w-4 h-4 text-green-600" />
-                                    <div className="text-2xl font-bold text-green-600">
-                                        {item.positive}
-                                    </div>
-                                </div>
-                                <div className="text-sm text-gray-600">
-                                    Positive
-                                </div>
-                                <Progress
-                                    size="sm"
-                                    value={(item.positive / item.total) * 100}
-                                    color="success"
-                                    className="mt-2"
-                                    aria-labelledby="progress"
-                                    aria-valuenow={(item.positive / item.total) * 100}
-                                    aria-valuemin={0}
-                                    aria-valuemax={100}
-                                />
-                            </div>
-
-                            <div className="text-center p-3 bg-yellow-50 rounded-lg">
-                                <div className="flex items-center justify-center gap-1 mb-1">
-                                    <AlertCircle className="w-4 h-4 text-yellow-600" />
-                                    <div className="text-2xl font-bold text-yellow-600">
-                                        {item.neutral}
-                                    </div>
-                                </div>
-                                <div className="text-sm text-gray-600">
-                                    Neutral
-                                </div>
-                                <Progress
-                                    size="sm"
-                                    value={(item.neutral / item.total) * 100}
-                                    color="warning"
-                                    className="mt-2"
-                                    aria-labelledby="progress"
-                                    aria-valuenow={(item.neutral / item.total) * 100}
-                                    aria-valuemin={0}
-                                    aria-valuemax={100}
-                                />
-                            </div>
-
-                            <div className="text-center p-3 bg-red-50 rounded-lg">
-                                <div className="flex items-center justify-center gap-1 mb-1">
-                                    <AlertCircle className="w-4 h-4 text-red-600" />
-                                    <div className="text-2xl font-bold text-red-600">
-                                        {item.negative}
-                                    </div>
-                                </div>
-                                <div className="text-sm text-gray-600">
-                                    Needs Attention
-                                </div>
-                                <Progress
-                                    size="sm"
-                                    value={(item.negative / item.total) * 100}
-                                    color="danger"
-                                    className="mt-2"
-                                    aria-labelledby="progress"
-                                    aria-valuenow={(item.negative / item.total) * 100}
-                                    aria-valuemin={0}
-                                    aria-valuemax={100}
-                                />
-                            </div>
-
-                            <div className="text-center p-3 bg-gray-50 rounded-lg">
-                                <div className="flex items-center justify-center gap-1 mb-1">
-                                    <Target className="w-4 h-4 text-gray-600" />
-                                    <div className="text-2xl font-bold text-gray-900">
-                                        {item.total}
-                                    </div>
-                                </div>
-                                <div className="text-sm text-gray-600">
-                                    Total
-                                </div>
-                                <Progress
-                                    size="sm"
-                                    value={100}
-                                    color="default"
-                                    className="mt-2"
-                                    aria-labelledby="progress"
-                                    aria-valuenow={100}
-                                    aria-valuemin={0}
-                                    aria-valuemax={100}
-                                />
-                            </div>
+                    <div className="mb-8">
+                        <div className="mb-4 flex items-center gap-2">
+                            <Activity className="w-5 h-5 text-emerald-600" />
+                            <h2 className="text-xl font-semibold text-gray-900">
+                                Detailed Question Analysis
+                            </h2>
                         </div>
-                    </CardBody>
-                </Card>
-            ))}
-        </div>
-    </div>
-)}
-            
+
+                        <div className="space-y-4">
+                            {chartData.map((item, index) => (
+                                <Card
+                                    key={index}
+                                    className="border border-gray-200 shadow-sm"
+                                >
+                                    <CardBody>
+                                        <h3 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                                            <Target className="w-4 h-4 text-emerald-600" />
+                                            {item.question}: {item.questionText}
+                                        </h3>
+
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                            <div className="text-center p-3 bg-green-50 rounded-lg">
+                                                <div className="flex items-center justify-center gap-1 mb-1">
+                                                    <CheckCircle className="w-4 h-4 text-green-600" />
+                                                    <div className="text-2xl font-bold text-green-600">
+                                                        {item.positive}
+                                                    </div>
+                                                </div>
+                                                <div className="text-sm text-gray-600">
+                                                    Positive
+                                                </div>
+                                                <Progress
+                                                    size="sm"
+                                                    value={
+                                                        (item.positive /
+                                                            item.total) *
+                                                        100
+                                                    }
+                                                    color="success"
+                                                    className="mt-2"
+                                                    aria-labelledby="progress"
+                                                    aria-valuenow={
+                                                        (item.positive /
+                                                            item.total) *
+                                                        100
+                                                    }
+                                                    aria-valuemin={0}
+                                                    aria-valuemax={100}
+                                                />
+                                            </div>
+
+                                            <div className="text-center p-3 bg-yellow-50 rounded-lg">
+                                                <div className="flex items-center justify-center gap-1 mb-1">
+                                                    <AlertCircle className="w-4 h-4 text-yellow-600" />
+                                                    <div className="text-2xl font-bold text-yellow-600">
+                                                        {item.neutral}
+                                                    </div>
+                                                </div>
+                                                <div className="text-sm text-gray-600">
+                                                    Neutral
+                                                </div>
+                                                <Progress
+                                                    size="sm"
+                                                    value={
+                                                        (item.neutral /
+                                                            item.total) *
+                                                        100
+                                                    }
+                                                    color="warning"
+                                                    className="mt-2"
+                                                    aria-labelledby="progress"
+                                                    aria-valuenow={
+                                                        (item.neutral /
+                                                            item.total) *
+                                                        100
+                                                    }
+                                                    aria-valuemin={0}
+                                                    aria-valuemax={100}
+                                                />
+                                            </div>
+
+                                            <div className="text-center p-3 bg-red-50 rounded-lg">
+                                                <div className="flex items-center justify-center gap-1 mb-1">
+                                                    <AlertCircle className="w-4 h-4 text-red-600" />
+                                                    <div className="text-2xl font-bold text-red-600">
+                                                        {item.negative}
+                                                    </div>
+                                                </div>
+                                                <div className="text-sm text-gray-600">
+                                                    Needs Attention
+                                                </div>
+                                                <Progress
+                                                    size="sm"
+                                                    value={
+                                                        (item.negative /
+                                                            item.total) *
+                                                        100
+                                                    }
+                                                    color="danger"
+                                                    className="mt-2"
+                                                    aria-labelledby="progress"
+                                                    aria-valuenow={
+                                                        (item.negative /
+                                                            item.total) *
+                                                        100
+                                                    }
+                                                    aria-valuemin={0}
+                                                    aria-valuemax={100}
+                                                />
+                                            </div>
+
+                                            <div className="text-center p-3 bg-gray-50 rounded-lg">
+                                                <div className="flex items-center justify-center gap-1 mb-1">
+                                                    <Target className="w-4 h-4 text-gray-600" />
+                                                    <div className="text-2xl font-bold text-gray-900">
+                                                        {item.total}
+                                                    </div>
+                                                </div>
+                                                <div className="text-sm text-gray-600">
+                                                    Total
+                                                </div>
+                                                <Progress
+                                                    size="sm"
+                                                    value={100}
+                                                    color="default"
+                                                    className="mt-2"
+                                                    aria-labelledby="progress"
+                                                    aria-valuenow={100}
+                                                    aria-valuemin={0}
+                                                    aria-valuemax={100}
+                                                />
+                                            </div>
+                                        </div>
+                                    </CardBody>
+                                </Card>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -14,18 +14,18 @@
 }
 
 .auth-scroll {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
 
 .auth-scroll::-webkit-scrollbar {
-  width: 0;
-  height: 0;
+    width: 0;
+    height: 0;
 }
 
-input[type="password"]::-ms-reveal,
-input[type="password"]::-ms-clear {
-  display: none;
+input[type='password']::-ms-reveal,
+input[type='password']::-ms-clear {
+    display: none;
 }
 
 body {
@@ -38,11 +38,11 @@ body {
         text-wrap: balance;
     }
     .no-scrollbar::-webkit-scrollbar {
-    display: none;
+        display: none;
     }
     .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
     }
 }
 
@@ -172,25 +172,49 @@ body {
 
 /* ===== Landing page animations ===== */
 @keyframes blob {
-    0% { transform: translate(0px, 0px) scale(1); }
-    33% { transform: translate(30px, -18px) scale(1.05); }
-    66% { transform: translate(-18px, 22px) scale(0.97); }
-    100% { transform: translate(0px, 0px) scale(1); }
+    0% {
+        transform: translate(0px, 0px) scale(1);
+    }
+    33% {
+        transform: translate(30px, -18px) scale(1.05);
+    }
+    66% {
+        transform: translate(-18px, 22px) scale(0.97);
+    }
+    100% {
+        transform: translate(0px, 0px) scale(1);
+    }
 }
 
 .animate-blob {
     animation: blob 10s ease-in-out infinite;
 }
 
-.animation-delay-200 { animation-delay: 200ms; }
-.animation-delay-400 { animation-delay: 400ms; }
-.animation-delay-600 { animation-delay: 600ms; }
-.animation-delay-2000 { animation-delay: 2000ms; }
-.animation-delay-4000 { animation-delay: 4000ms; }
+.animation-delay-200 {
+    animation-delay: 200ms;
+}
+.animation-delay-400 {
+    animation-delay: 400ms;
+}
+.animation-delay-600 {
+    animation-delay: 600ms;
+}
+.animation-delay-2000 {
+    animation-delay: 2000ms;
+}
+.animation-delay-4000 {
+    animation-delay: 4000ms;
+}
 
 @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(14px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .animate-fadeUp {
@@ -213,13 +237,21 @@ body {
 }
 
 @keyframes shimmer {
-    0% { transform: translateX(-60%) rotate(8deg); opacity: 0; }
-    30% { opacity: 1; }
-    100% { transform: translateX(60%) rotate(8deg); opacity: 0; }
+    0% {
+        transform: translateX(-60%) rotate(8deg);
+        opacity: 0;
+    }
+    30% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateX(60%) rotate(8deg);
+        opacity: 0;
+    }
 }
 
 .leaflet-container {
-  width: 100%;
-  height: 100%;
-  z-index: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
 }

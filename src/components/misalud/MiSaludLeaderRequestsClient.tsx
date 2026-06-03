@@ -40,10 +40,7 @@ const MiSaludLeaderRequestsClient = ({ session }: Props) => {
     const router = useRouter();
     const queryClient = useQueryClient();
 
-    const {
-        data: leaderRequestsData,
-        isLoading: loading,
-    } = useQuery<{
+    const { data: leaderRequestsData, isLoading: loading } = useQuery<{
         requests: MiSaludRequest[];
         team: TeamInfo | null;
     }>({
@@ -156,13 +153,16 @@ const MiSaludLeaderRequestsClient = ({ session }: Props) => {
                                         Team Requests
                                     </h1>
                                     <p className="text-white/85 text-lg">
-                                        Review join requests for your Mi Salud team
+                                        Review join requests for your Mi Salud
+                                        team
                                     </p>
                                 </div>
 
                                 <Button
                                     variant="light"
-                                    startContent={<ArrowLeft className="w-4 h-4" />}
+                                    startContent={
+                                        <ArrowLeft className="w-4 h-4" />
+                                    }
                                     className="h-12 px-6 bg-white/15 text-white border border-white/25 backdrop-blur-sm rounded-xl"
                                     onPress={() => router.push('/misalud')}
                                 >
@@ -179,7 +179,9 @@ const MiSaludLeaderRequestsClient = ({ session }: Props) => {
                     </div>
                     <div>
                         <h2 className="text-2xl font-bold text-slate-800">
-                            {team ? `${team.name} Requests` : 'Pending Team Requests'}
+                            {team
+                                ? `${team.name} Requests`
+                                : 'Pending Team Requests'}
                         </h2>
                         <p className="text-slate-600">
                             Approve or reject team member join requests
@@ -210,7 +212,8 @@ const MiSaludLeaderRequestsClient = ({ session }: Props) => {
                                 No Pending Requests
                             </h3>
                             <p className="text-slate-600">
-                                There are currently no team member requests waiting for review.
+                                There are currently no team member requests
+                                waiting for review.
                             </p>
                         </CardBody>
                     </Card>
@@ -228,7 +231,8 @@ const MiSaludLeaderRequestsClient = ({ session }: Props) => {
                                                 {request.fullName}
                                             </h3>
                                             <p className="text-slate-500">
-                                                Requested Team: {request.teamName}
+                                                Requested Team:{' '}
+                                                {request.teamName}
                                             </p>
                                         </div>
 
@@ -263,7 +267,9 @@ const MiSaludLeaderRequestsClient = ({ session }: Props) => {
                                                 Submitted
                                             </p>
                                             <p className="font-bold text-slate-800">
-                                                {new Date(request.createdAt).toLocaleDateString()}
+                                                {new Date(
+                                                    request.createdAt
+                                                ).toLocaleDateString()}
                                             </p>
                                         </div>
                                     </div>
@@ -281,18 +287,30 @@ const MiSaludLeaderRequestsClient = ({ session }: Props) => {
                                         <Button
                                             color="danger"
                                             variant="flat"
-                                            startContent={<XCircle className="w-4 h-4" />}
-                                            isDisabled={processingId === request.id}
-                                            onPress={() => handleReject(request.id)}
+                                            startContent={
+                                                <XCircle className="w-4 h-4" />
+                                            }
+                                            isDisabled={
+                                                processingId === request.id
+                                            }
+                                            onPress={() =>
+                                                handleReject(request.id)
+                                            }
                                         >
                                             Reject
                                         </Button>
 
                                         <Button
                                             color="success"
-                                            startContent={<CheckCircle2 className="w-4 h-4" />}
-                                            isLoading={processingId === request.id}
-                                            onPress={() => handleApprove(request.id)}
+                                            startContent={
+                                                <CheckCircle2 className="w-4 h-4" />
+                                            }
+                                            isLoading={
+                                                processingId === request.id
+                                            }
+                                            onPress={() =>
+                                                handleApprove(request.id)
+                                            }
                                         >
                                             Approve
                                         </Button>

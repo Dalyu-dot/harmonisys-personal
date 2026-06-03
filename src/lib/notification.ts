@@ -3,7 +3,7 @@
 // Server-side helper — call this anywhere you approve/reject a request so a
 // Notification row is created automatically.
 // ─────────────────────────────────────────────────────────────────────────────
-import { prisma } from '@/lib/prisma';  // adjust path as needed
+import { prisma } from '@/lib/prisma'; // adjust path as needed
 
 export type NotifType =
     | 'MISALUD_REQUEST_APPROVED'
@@ -48,7 +48,7 @@ export async function notifyMemberApproved(
     return createNotification({
         userId,
         type: 'MISALUD_REQUEST_APPROVED',
-        title: 'You\'ve been accepted! 🎉',
+        title: "You've been accepted! 🎉",
         message: `Your request to join the Mi Salud team "${teamName}" has been approved.`,
         link: '/overview/misalud',
         refId: requestId,

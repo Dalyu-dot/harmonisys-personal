@@ -28,7 +28,8 @@ const UnahonConfirmModal: React.FC<UnahonConfirmModalProps> = ({
             header: 'border-none',
             body: 'py-6',
             footer: 'border-none',
-            closeButton: 'text-slate-400 hover:text-[#7B122F] hover:bg-[#7B122F]/10',
+            closeButton:
+                'text-slate-400 hover:text-[#7B122F] hover:bg-[#7B122F]/10',
         }}
     >
         <ModalContent>

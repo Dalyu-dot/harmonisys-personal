@@ -5,10 +5,7 @@ import { auth } from '@/lib/auth';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-export async function PATCH(
-    _req: Request,
-    { params }: RouteContext
-) {
+export async function PATCH(_req: Request, { params }: RouteContext) {
     const { id } = await params;
     const session = await auth();
     if (!session?.user?.id) {
@@ -31,10 +28,7 @@ export async function PATCH(
     return NextResponse.json({ notification: updated });
 }
 
-export async function DELETE(
-    _req: Request,
-    { params }: RouteContext
-) {
+export async function DELETE(_req: Request, { params }: RouteContext) {
     const { id } = await params;
     const session = await auth();
     if (!session?.user?.id) {

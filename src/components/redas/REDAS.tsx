@@ -42,10 +42,7 @@ const REDAS = () => {
         return text.replace(/ /g, '+');
     };
 
-    const {
-        data: places = [],
-        isLoading: placesLoading,
-    } = useQuery<string[]>({
+    const { data: places = [], isLoading: placesLoading } = useQuery<string[]>({
         queryKey: ['redas-places', selectedLabel],
         queryFn: async () => {
             const response = await fetch(
@@ -65,10 +62,7 @@ const REDAS = () => {
         setSelectedPlace(places[0] || null);
     }, [places]);
 
-    const {
-        data = [],
-        isLoading: dataLoading,
-    } = useQuery<PlaceData[]>({
+    const { data = [], isLoading: dataLoading } = useQuery<PlaceData[]>({
         queryKey: ['redas-training-data', selectedLabel, selectedPlace],
         queryFn: async () => {
             const response = await fetch(
@@ -107,164 +101,185 @@ const REDAS = () => {
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
             <div className="container mx-auto px-4 py-8 max-w-7xl">
-                
                 {/* ✅ COMBINED HEADER + CONTROLS (like User Controller) */}
                 <Card className="mb-8 bg-white/70 backdrop-blur-sm shadow-lg border border-white/20 overflow-hidden rounded-[28px]">
-                {/* ✅ HERO (top) */}
-                <div className="bg-gradient-to-r from-blue-800 via-blue-700 to-sky-600">
-                    <div className="p-6">
-                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                        <div>
-                        <h1 className="text-4xl lg:text-5xl font-black text-white drop-shadow-[0_12px_22px_rgba(0,0,0,0.35)] mb-2">
-                            REDAS Dashboard
-                        </h1>
-                        <p className="text-white/85 text-lg">
-                            Explore comprehensive disaster resilience training programs across the Philippines
-                        </p>
-                        </div>
+                    {/* ✅ HERO (top) */}
+                    <div className="bg-gradient-to-r from-blue-800 via-blue-700 to-sky-600">
+                        <div className="p-6">
+                            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                                <div>
+                                    <h1 className="text-4xl lg:text-5xl font-black text-white drop-shadow-[0_12px_22px_rgba(0,0,0,0.35)] mb-2">
+                                        REDAS Dashboard
+                                    </h1>
+                                    <p className="text-white/85 text-lg">
+                                        Explore comprehensive disaster
+                                        resilience training programs across the
+                                        Philippines
+                                    </p>
+                                </div>
 
-                        <Button
-                            as={Link}
-                            href="/overview/redas"
-                            variant="light"
-                            startContent={<ArrowLeft className="w-4 h-4" />}
-                            className="bg-white/15 text-white border border-white/25 backdrop-blur-sm shadow-sm hover:bg-white/20 transition-all duration-300 font-medium lg:self-center"
-                            >
-                            Go Back
-                        </Button>
-                    </div>
-                    </div>
-                </div>
-
-                {/* ✅ CONTROLS (bottom attached) */}
-                <div className="bg-white/85 backdrop-blur-md border-t border-white/30">
-                    <CardBody className="p-6">
-                    <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
-                        {/* Dropdowns */}
-                        <div className="flex flex-col sm:flex-row gap-3 flex-1">
-                        <Dropdown>
-                            <DropdownTrigger>
-                            <Button
-                                className="font-semibold min-w-[200px]"
-                                color="primary"
-                                variant="flat"
-                                size="lg"
-                                endContent={<ChevronDown className="size-4" />}
-                            >
-                                📊 {selectedLabel}
-                            </Button>
-                            </DropdownTrigger>
-                            <DropdownMenu className="bg-white/95 backdrop-blur-sm max-h-[300px] overflow-y-auto">
-                            {labels.map((label) => (
-                                <DropdownItem
-                                key={label}
-                                onPress={() => setSelectedLabel(label)}
-                                className="hover:bg-slate-100/80"
-                                >
-                                {label}
-                                </DropdownItem>
-                            ))}
-                            </DropdownMenu>
-                        </Dropdown>
-
-                        {!placesLoading && places.length > 0 ? (
-                            <Dropdown>
-                            <DropdownTrigger>
                                 <Button
-                                className="font-semibold min-w-[200px]"
-                                color="secondary"
-                                variant="flat"
-                                size="lg"
-                                endContent={<ChevronDown className="size-4" />}
+                                    as={Link}
+                                    href="/overview/redas"
+                                    variant="light"
+                                    startContent={
+                                        <ArrowLeft className="w-4 h-4" />
+                                    }
+                                    className="bg-white/15 text-white border border-white/25 backdrop-blur-sm shadow-sm hover:bg-white/20 transition-all duration-300 font-medium lg:self-center"
                                 >
-                                📍 {selectedPlace || 'Select Place'}
+                                    Go Back
                                 </Button>
-                            </DropdownTrigger>
-                            <DropdownMenu className="bg-white/95 backdrop-blur-sm max-h-[300px] overflow-y-auto">
-                                {places.map((place) => (
-                                <DropdownItem
-                                    key={place}
-                                    onPress={() => setSelectedPlace(place)}
-                                    className="hover:bg-slate-100/80"
-                                >
-                                    {place}
-                                </DropdownItem>
-                                ))}
-                            </DropdownMenu>
-                            </Dropdown>
-                        ) : (
-                            <Button
-                            isLoading={placesLoading}
-                            className="font-semibold min-w-[200px]"
-                            color="secondary"
-                            variant="flat"
-                            size="lg"
-                            >
-                            {placesLoading ? 'Loading Places...' : 'No Places Available'}
-                            </Button>
-                        )}
+                            </div>
                         </div>
+                    </div>
 
-                        {/* ✅ Search Bar (border like User Controller) */}
-                        <div className="w-full lg:w-auto">
-                        <Input
-                            placeholder="Search trainings and locations..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="min-w-[320px]"
-                            classNames={{
-                            input: 'text-slate-700 placeholder:text-slate-500',
-                            inputWrapper:
-                                'bg-white/85 backdrop-blur-sm border-2 border-blue-300/40 shadow-sm ' +
-                                'hover:border-blue-500/40 focus-within:border-blue-600/50 ' +
-                                'focus-within:shadow-[0_0_0_4px_rgba(59,130,246,0.12)] ' +
-                                'transition-all duration-300 h-12 rounded-2xl',
-                            }}
-                            startContent={
-                            <svg
-                                className="h-5 w-5 text-blue-600"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                                />
-                            </svg>
-                            }
-                            endContent={
-                            searchQuery && (
-                                <Button
-                                isIconOnly
-                                size="sm"
-                                variant="light"
-                                onPress={() => setSearchQuery('')}
-                                className="min-w-unit-6 w-6 h-6"
-                                >
-                                <svg
-                                    className="h-4 w-4 text-slate-400"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                >
-                                    <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M6 18L18 6M6 6l12 12"
+                    {/* ✅ CONTROLS (bottom attached) */}
+                    <div className="bg-white/85 backdrop-blur-md border-t border-white/30">
+                        <CardBody className="p-6">
+                            <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+                                {/* Dropdowns */}
+                                <div className="flex flex-col sm:flex-row gap-3 flex-1">
+                                    <Dropdown>
+                                        <DropdownTrigger>
+                                            <Button
+                                                className="font-semibold min-w-[200px]"
+                                                color="primary"
+                                                variant="flat"
+                                                size="lg"
+                                                endContent={
+                                                    <ChevronDown className="size-4" />
+                                                }
+                                            >
+                                                📊 {selectedLabel}
+                                            </Button>
+                                        </DropdownTrigger>
+                                        <DropdownMenu className="bg-white/95 backdrop-blur-sm max-h-[300px] overflow-y-auto">
+                                            {labels.map((label) => (
+                                                <DropdownItem
+                                                    key={label}
+                                                    onPress={() =>
+                                                        setSelectedLabel(label)
+                                                    }
+                                                    className="hover:bg-slate-100/80"
+                                                >
+                                                    {label}
+                                                </DropdownItem>
+                                            ))}
+                                        </DropdownMenu>
+                                    </Dropdown>
+
+                                    {!placesLoading && places.length > 0 ? (
+                                        <Dropdown>
+                                            <DropdownTrigger>
+                                                <Button
+                                                    className="font-semibold min-w-[200px]"
+                                                    color="secondary"
+                                                    variant="flat"
+                                                    size="lg"
+                                                    endContent={
+                                                        <ChevronDown className="size-4" />
+                                                    }
+                                                >
+                                                    📍{' '}
+                                                    {selectedPlace ||
+                                                        'Select Place'}
+                                                </Button>
+                                            </DropdownTrigger>
+                                            <DropdownMenu className="bg-white/95 backdrop-blur-sm max-h-[300px] overflow-y-auto">
+                                                {places.map((place) => (
+                                                    <DropdownItem
+                                                        key={place}
+                                                        onPress={() =>
+                                                            setSelectedPlace(
+                                                                place
+                                                            )
+                                                        }
+                                                        className="hover:bg-slate-100/80"
+                                                    >
+                                                        {place}
+                                                    </DropdownItem>
+                                                ))}
+                                            </DropdownMenu>
+                                        </Dropdown>
+                                    ) : (
+                                        <Button
+                                            isLoading={placesLoading}
+                                            className="font-semibold min-w-[200px]"
+                                            color="secondary"
+                                            variant="flat"
+                                            size="lg"
+                                        >
+                                            {placesLoading
+                                                ? 'Loading Places...'
+                                                : 'No Places Available'}
+                                        </Button>
+                                    )}
+                                </div>
+
+                                {/* ✅ Search Bar (border like User Controller) */}
+                                <div className="w-full lg:w-auto">
+                                    <Input
+                                        placeholder="Search trainings and locations..."
+                                        value={searchQuery}
+                                        onChange={(e) =>
+                                            setSearchQuery(e.target.value)
+                                        }
+                                        className="min-w-[320px]"
+                                        classNames={{
+                                            input: 'text-slate-700 placeholder:text-slate-500',
+                                            inputWrapper:
+                                                'bg-white/85 backdrop-blur-sm border-2 border-blue-300/40 shadow-sm ' +
+                                                'hover:border-blue-500/40 focus-within:border-blue-600/50 ' +
+                                                'focus-within:shadow-[0_0_0_4px_rgba(59,130,246,0.12)] ' +
+                                                'transition-all duration-300 h-12 rounded-2xl',
+                                        }}
+                                        startContent={
+                                            <svg
+                                                className="h-5 w-5 text-blue-600"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                stroke="currentColor"
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                                                />
+                                            </svg>
+                                        }
+                                        endContent={
+                                            searchQuery && (
+                                                <Button
+                                                    isIconOnly
+                                                    size="sm"
+                                                    variant="light"
+                                                    onPress={() =>
+                                                        setSearchQuery('')
+                                                    }
+                                                    className="min-w-unit-6 w-6 h-6"
+                                                >
+                                                    <svg
+                                                        className="h-4 w-4 text-slate-400"
+                                                        fill="none"
+                                                        viewBox="0 0 24 24"
+                                                        stroke="currentColor"
+                                                    >
+                                                        <path
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                            strokeWidth={2}
+                                                            d="M6 18L18 6M6 6l12 12"
+                                                        />
+                                                    </svg>
+                                                </Button>
+                                            )
+                                        }
                                     />
-                                </svg>
-                                </Button>
-                            )
-                            }
-                        />
-                        </div>
+                                </div>
+                            </div>
+                        </CardBody>
                     </div>
-                    </CardBody>
-                </div>
                 </Card>
 
                 {/* Stats Section */}
@@ -276,7 +291,9 @@ const REDAS = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {/* Total Trainings */}
-                        <Card className={`${statCardBase} bg-[#eef2fb] border border-[#cfd8ee]`}>
+                        <Card
+                            className={`${statCardBase} bg-[#eef2fb] border border-[#cfd8ee]`}
+                        >
                             <CardBody className="p-6">
                                 <div className="flex items-center gap-4 mb-4">
                                     <div className="h-11 w-11 rounded-2xl bg-[#bcd0ff] flex items-center justify-center shadow-md">
@@ -304,12 +321,50 @@ const REDAS = () => {
                                     </div>
                                 </div>
                                 <div className="mb-3">
-                                    <span className="text-4xl font-bold text-slate-900">
-                                        {filteredData.length}
-                                    </span>
-                                    <span className="text-lg text-slate-500 ml-2">
-                                        programs
-                                    </span>
+                                    {filteredData.length > 0 ? (
+                                        <>
+                                            <span className="text-4xl font-bold text-slate-900">
+                                                {filteredData.length}
+                                            </span>
+                                            <span className="text-lg text-slate-500 ml-2">
+                                                programs
+                                            </span>
+                                        </>
+                                    ) : (
+                                        <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+                                            <span className="mt-0.5 text-amber-500">
+                                                <svg
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    className="h-5 w-5"
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    strokeWidth="2"
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                >
+                                                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                                                    <line
+                                                        x1="12"
+                                                        y1="9"
+                                                        x2="12"
+                                                        y2="13"
+                                                    />
+                                                    <line
+                                                        x1="12"
+                                                        y1="17"
+                                                        x2="12.01"
+                                                        y2="17"
+                                                    />
+                                                </svg>
+                                            </span>
+                                            <span className="text-sm font-medium text-amber-800">
+                                                Kindly contact REDAS to know
+                                                their training programs and
+                                                schedules.
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="mt-4 h-2 w-full rounded-full bg-[#dbe7ff] overflow-hidden">
                                     <div className="h-full rounded-full bg-[#3b82f6] w-full" />
@@ -318,7 +373,9 @@ const REDAS = () => {
                         </Card>
 
                         {/* Selected Location */}
-                        <Card className={`${statCardBase} bg-[#eef8f0] border border-[#cfe8d4]`}>
+                        <Card
+                            className={`${statCardBase} bg-[#eef8f0] border border-[#cfe8d4]`}
+                        >
                             <CardBody className="p-6">
                                 <div className="flex items-center gap-4 mb-4">
                                     <div className="h-11 w-11 rounded-2xl bg-[#bfe8c8] flex items-center justify-center shadow-md">
@@ -363,7 +420,9 @@ const REDAS = () => {
                         </Card>
 
                         {/* Category */}
-                        <Card className={`${statCardBase} bg-[#f4edfb] border border-[#dfcff3]`}>
+                        <Card
+                            className={`${statCardBase} bg-[#f4edfb] border border-[#dfcff3]`}
+                        >
                             <CardBody className="p-6">
                                 <div className="flex items-center gap-4 mb-4">
                                     <div className="h-11 w-11 rounded-2xl bg-[#d9b8f4] flex items-center justify-center shadow-md">
@@ -392,7 +451,10 @@ const REDAS = () => {
                                 </div>
                                 <div className="mb-3">
                                     <span className="text-lg font-bold text-slate-900">
-                                        {selectedLabel.replace('REDAS Trained ', '')}
+                                        {selectedLabel.replace(
+                                            'REDAS Trained ',
+                                            ''
+                                        )}
                                     </span>
                                 </div>
                                 <div className="mt-4 h-2 w-full rounded-full bg-[#eadcf8] overflow-hidden">
@@ -474,9 +536,9 @@ const REDAS = () => {
                                         {/* Blurred background */}
                                         <Image
                                             src={
-                                            item.gdrive_link === 'N/A'
-                                                ? '/dostPhivolcs_withtext.png'
-                                                : `https://drive.google.com/uc?export=view&id=${extractFileId(item.gdrive_link)}`
+                                                item.gdrive_link === 'N/A'
+                                                    ? '/dostPhivolcs_withtext.png'
+                                                    : `https://drive.google.com/uc?export=view&id=${extractFileId(item.gdrive_link)}`
                                             }
                                             alt="REDAS Training background"
                                             fill
@@ -486,9 +548,9 @@ const REDAS = () => {
                                         {/* Foreground image (FULL, not cropped) */}
                                         <Image
                                             src={
-                                            item.gdrive_link === 'N/A'
-                                                ? '/dostPhivolcs_withtext.png'
-                                                : `https://drive.google.com/uc?export=view&id=${extractFileId(item.gdrive_link)}`
+                                                item.gdrive_link === 'N/A'
+                                                    ? '/dostPhivolcs_withtext.png'
+                                                    : `https://drive.google.com/uc?export=view&id=${extractFileId(item.gdrive_link)}`
                                             }
                                             alt="REDAS Training"
                                             fill
@@ -540,7 +602,9 @@ const REDAS = () => {
                                                     <Button
                                                         as={Link}
                                                         href={item.article_link}
-                                                        endContent={<Link2 className="h-4 w-4" />}
+                                                        endContent={
+                                                            <Link2 className="h-4 w-4" />
+                                                        }
                                                         className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                                                         target="_blank"
                                                         rel="noopener noreferrer"

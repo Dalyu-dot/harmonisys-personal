@@ -1,7 +1,7 @@
 // app/api/notifications/route.ts
 import { NextResponse } from 'next/server';
-          // adjust to your auth import
-import { prisma } from '@/lib/prisma';   // adjust to your prisma import
+// adjust to your auth import
+import { prisma } from '@/lib/prisma'; // adjust to your prisma import
 import { auth } from '@/lib/auth';
 
 // ── GET /api/notifications ────────────────────────────────────────────────────

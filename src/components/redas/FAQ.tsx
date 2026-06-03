@@ -15,14 +15,14 @@ import Image from 'next/image';
 
 // REDAS Theme Configuration (BLUE)
 const redasTheme = {
-  background: 'bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-100',
-  headerGradient: 'from-blue-900 via-sky-800 to-indigo-900',
-  primaryGradient: 'from-blue-600 to-sky-600',
-  primaryHoverGradient: 'from-blue-700 to-sky-700',
-  secondaryGradient: 'from-sky-600 to-indigo-600',
-  tertiaryGradient: 'from-indigo-600 to-cyan-600',
-  chipColor: 'bg-blue-100 text-blue-800',
-  accentColor: 'border-blue-200',
+    background: 'bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-100',
+    headerGradient: 'from-blue-900 via-sky-800 to-indigo-900',
+    primaryGradient: 'from-blue-600 to-sky-600',
+    primaryHoverGradient: 'from-blue-700 to-sky-700',
+    secondaryGradient: 'from-sky-600 to-indigo-600',
+    tertiaryGradient: 'from-indigo-600 to-cyan-600',
+    chipColor: 'bg-blue-100 text-blue-800',
+    accentColor: 'border-blue-200',
 };
 
 type FAQItem = {
@@ -58,7 +58,9 @@ const FAQ: React.FC<FAQProps> = ({ data }) => {
                                     <CheckCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
                                     <h4
                                         className={`text-slate-800 text-base ${
-                                            section.points ? 'font-semibold' : 'font-normal'
+                                            section.points
+                                                ? 'font-semibold'
+                                                : 'font-normal'
                                         }`}
                                     >
                                         {section.title}
@@ -110,9 +112,7 @@ const FAQ: React.FC<FAQProps> = ({ data }) => {
     };
 
     return (
-        <div
-            className={`min-h-screen ${redasTheme.background}`}
-        >
+        <div className={`min-h-screen ${redasTheme.background}`}>
             <div className="max-w-4xl mx-auto px-4 py-12">
                 {/* Header Section */}
                 <Card className="mb-8 bg-white/70 backdrop-blur-sm shadow-lg border border-white/20">

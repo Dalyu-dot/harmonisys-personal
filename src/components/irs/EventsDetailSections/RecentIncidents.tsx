@@ -80,8 +80,8 @@ const RecentIncidents: React.FC<{
                                       </div>
 
                                       <p className="mb-5 text-sm leading-7 text-gray-600 text-justify">
-                                        {incident.description}
-                                    </p>
+                                          {incident.description}
+                                      </p>
 
                                       <div className="flex flex-wrap items-center gap-x-8 gap-y-3 pt-2 text-sm text-gray-500">
                                           <div className="flex items-center gap-2 whitespace-nowrap">
@@ -91,7 +91,9 @@ const RecentIncidents: React.FC<{
 
                                           <div className="flex items-center gap-2 whitespace-nowrap">
                                               <Calendar className="w-4 h-4 text-rose-600" />
-                                              <span>{formatDate(incident.date)}</span>
+                                              <span>
+                                                  {formatDate(incident.date)}
+                                              </span>
                                           </div>
 
                                           <div className="flex items-center gap-2 whitespace-nowrap">
@@ -101,7 +103,10 @@ const RecentIncidents: React.FC<{
 
                                           <div className="flex items-center gap-2 whitespace-nowrap">
                                               <Users className="w-4 h-4 text-rose-600" />
-                                              <span>{incident.reporter || 'Unknown'}</span>
+                                              <span>
+                                                  {incident.reporter ||
+                                                      'Unknown'}
+                                              </span>
                                           </div>
                                       </div>
                                   </CardBody>

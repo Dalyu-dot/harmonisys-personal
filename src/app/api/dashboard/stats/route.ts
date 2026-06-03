@@ -85,7 +85,9 @@ export async function GET() {
                   date: { gte: thirtyDaysAgo },
               };
 
-        const submissionWhere = isAdmin ? {} : ({ userId: currentUser.id } as any);
+        const submissionWhere = isAdmin
+            ? {}
+            : ({ userId: currentUser.id } as any);
         const recentSubmissionWhere = isAdmin
             ? { createdAt: { gte: thirtyDaysAgo } }
             : ({
@@ -122,7 +124,9 @@ export async function GET() {
 
             isAdmin
                 ? prisma.submission.count()
-                : prisma.submission.count({ where: submissionWhere }).catch(() => 0),
+                : prisma.submission
+                      .count({ where: submissionWhere })
+                      .catch(() => 0),
 
             isAdmin
                 ? getDocs(collection(IRSdb, 'events'))
@@ -139,33 +143,43 @@ export async function GET() {
 
         const totalUsers =
             isAdmin && userStats.status === 'fulfilled'
-                ? userStats.value.reduce((sum, item) => sum + item._count.role, 0)
+                ? userStats.value.reduce(
+                      (sum, item) => sum + item._count.role,
+                      0
+                  )
                 : 0;
 
         const usersByRole =
             isAdmin && userStats.status === 'fulfilled'
-                ? userStats.value.reduce((acc, item) => {
-                      acc[item.role] = item._count.role;
-                      return acc;
-                  }, {} as Record<string, number>)
+                ? userStats.value.reduce(
+                      (acc, item) => {
+                          acc[item.role] = item._count.role;
+                          return acc;
+                      },
+                      {} as Record<string, number>
+                  )
                 : {};
 
         const incidentsByCategory =
             isAdmin && incidentStats.status === 'fulfilled'
-                ? incidentStats.value.reduce((acc, item) => {
-                      acc[item.category] = item._count.category;
-                      return acc;
-                  }, {} as Record<string, number>)
+                ? incidentStats.value.reduce(
+                      (acc, item) => {
+                          acc[item.category] = item._count.category;
+                          return acc;
+                      },
+                      {} as Record<string, number>
+                  )
                 : {};
-
-      
 
         const unahonByType =
             isAdmin && unahonStats.status === 'fulfilled'
-                ? unahonStats.value.reduce((acc, item) => {
-                      acc[item.assessmentType] = item._count.assessmentType;
-                      return acc;
-                  }, {} as Record<string, number>)
+                ? unahonStats.value.reduce(
+                      (acc, item) => {
+                          acc[item.assessmentType] = item._count.assessmentType;
+                          return acc;
+                      },
+                      {} as Record<string, number>
+                  )
                 : {};
 
         const totalIRSEvents =
@@ -177,7 +191,9 @@ export async function GET() {
                 : 0;
 
         const redasTrainingSessions =
-            isAdmin && redasStats.status === 'fulfilled' && redasStats.value.count
+            isAdmin &&
+            redasStats.status === 'fulfilled' &&
+            redasStats.value.count
                 ? redasStats.value.count
                 : 0;
 
@@ -192,23 +208,28 @@ export async function GET() {
         ]);
 
         const totalQuestionnaires =
-            questionnaireStats.status === 'fulfilled' ? questionnaireStats.value : 0;
+            questionnaireStats.status === 'fulfilled'
+                ? questionnaireStats.value
+                : 0;
 
         // Recent counts (last 30 days, role-aware)
-        const [recentIncidentsCount, recentUnahonCount, recentSubmissionsCount] =
-            await Promise.all([
-                prisma.incident.count({
-                    where: recentIncidentUserWhere,
-                }),
-                prisma.unahon.count({
-                    where: recentUnahonWhere,
-                }),
-                prisma.submission
-                    .count({
-                        where: recentSubmissionWhere,
-                    } as any)
-                    .catch(() => 0),
-            ]);
+        const [
+            recentIncidentsCount,
+            recentUnahonCount,
+            recentSubmissionsCount,
+        ] = await Promise.all([
+            prisma.incident.count({
+                where: recentIncidentUserWhere,
+            }),
+            prisma.unahon.count({
+                where: recentUnahonWhere,
+            }),
+            prisma.submission
+                .count({
+                    where: recentSubmissionWhere,
+                } as any)
+                .catch(() => 0),
+        ]);
 
         // Recent activities: for admin = all recent incidents, for others = only their incidents
         const recentIncidents = await prisma.incident.findMany({
@@ -269,16 +290,16 @@ export async function GET() {
             breakdown: {
                 usersByRole,
                 incidentsByCategory,
-              
+
                 unahonByType,
             },
             topResponders: topRespondersWithNames,
             recentActivities: recentIncidents.map((incident) => ({
                 tool: 'IRS',
                 action:
-                    incident.category.toLowerCase() === 'other'
-                        && `New ${incident.otherCategoryDetail?.toLowerCase() || 'incident'} in ${incident.location}`,
-                      
+                    incident.category.toLowerCase() === 'other' &&
+                    `New ${incident.otherCategoryDetail?.toLowerCase() || 'incident'} in ${incident.location}`,
+
                 timestamp: incident.createdAt.toISOString(),
                 user: incident.reporter || 'Anonymous',
             })),

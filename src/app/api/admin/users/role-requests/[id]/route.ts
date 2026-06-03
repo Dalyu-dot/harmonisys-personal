@@ -12,100 +12,116 @@ import { sendRoleApprovedEmail, sendRoleRejectedEmail } from '@/lib/email';
 import { UserType } from '@prisma/client';
 
 export async function PATCH(
-  req: NextRequest,
+    req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
-  // Auth guard (admin only)
-  const session = await auth();
-  if (!session?.user?.id || session.user.role !== UserType.ADMIN) {
-    return NextResponse.json({ success: false, message: 'Forbidden.' }, { status: 403 });
-  }
+    // Auth guard (admin only)
+    const session = await auth();
+    if (!session?.user?.id || session.user.role !== UserType.ADMIN) {
+        return NextResponse.json(
+            { success: false, message: 'Forbidden.' },
+            { status: 403 }
+        );
+    }
 
     const { id } = await params;
-  const body = await req.json().catch(() => ({}));
-  const { action, reason } = body as {
-    action: 'APPROVE' | 'REJECT';
-    reason?: string;
-  };
+    const body = await req.json().catch(() => ({}));
+    const { action, reason } = body as {
+        action: 'APPROVE' | 'REJECT';
+        reason?: string;
+    };
 
-  if (action !== 'APPROVE' && action !== 'REJECT') {
-    return NextResponse.json(
-      { success: false, message: 'action must be APPROVE or REJECT.' },
-      { status: 400 }
-    );
-  }
+    if (action !== 'APPROVE' && action !== 'REJECT') {
+        return NextResponse.json(
+            { success: false, message: 'action must be APPROVE or REJECT.' },
+            { status: 400 }
+        );
+    }
 
-  // Fetch the request + the requesting user's info
-  // Schema relation name is "RoleChangeUser" → Prisma accessor is `user`
-  const roleRequest = await prisma.roleChangeRequest.findUnique({
-    where: { id },
-    include: { user: { select: { id: true, name: true, email: true } } },
-  });
-
-  if (!roleRequest) {
-    return NextResponse.json(
-      { success: false, message: 'Request not found.' },
-      { status: 404 }
-    );
-  }
-
-  if (roleRequest.status !== 'PENDING') {
-    return NextResponse.json(
-      { success: false, message: 'This request has already been actioned.' },
-      { status: 409 }
-    );
-  }
-
-  // Resolve inside a transaction
-  await prisma.$transaction(async (tx) => {
-    // Update request status + stamp reviewer
-    await tx.roleChangeRequest.update({
-      where: { id },
-      data: {
-        status: action === 'APPROVE' ? 'APPROVED' : 'REJECTED',
-        reviewedAt: new Date(),
-        reviewedById: session.user.id,
-      },
+    // Fetch the request + the requesting user's info
+    // Schema relation name is "RoleChangeUser" → Prisma accessor is `user`
+    const roleRequest = await prisma.roleChangeRequest.findUnique({
+        where: { id },
+        include: { user: { select: { id: true, name: true, email: true } } },
     });
 
-    // If approved — upgrade user's role, MHPSS level, org, and certificate
-    if (action === 'APPROVE') {
-      await tx.user.update({
-        where: { id: roleRequest.userId },
-        data: {
-          role: roleRequest.toRole as UserType,
-          // requestedMhpssLevel is already typed as MhpssLevel? in schema — no cast needed
-          ...(roleRequest.requestedMhpssLevel
-            ? { mhpssLevel: roleRequest.requestedMhpssLevel }
-            : {}),
-          ...(roleRequest.requestedResponderOrganization
-            ? { responderOrganization: roleRequest.requestedResponderOrganization }
-            : {}),
-          ...(roleRequest.requestedMhpssCertificateFileUrl
-            ? { mhpssCertificateFileUrl: roleRequest.requestedMhpssCertificateFileUrl }
-            : {}),
-        },
-      });
+    if (!roleRequest) {
+        return NextResponse.json(
+            { success: false, message: 'Request not found.' },
+            { status: 404 }
+        );
     }
-  });
 
-  // Send notification email to the requesting user (fire-and-forget)
-  const { name, email } = roleRequest.user;
+    if (roleRequest.status !== 'PENDING') {
+        return NextResponse.json(
+            {
+                success: false,
+                message: 'This request has already been actioned.',
+            },
+            { status: 409 }
+        );
+    }
 
-  if (action === 'APPROVE') {
-    sendRoleApprovedEmail({
-      userName: name,
-      userEmail: email,
-      newRole: roleRequest.toRole,
-    }).catch((err) => console.error('[email] sendRoleApprovedEmail failed:', err));
-  } else {
-    sendRoleRejectedEmail({
-      userName: name,
-      userEmail: email,
-      toRole: roleRequest.toRole,
-      reason: reason ?? null,
-    }).catch((err) => console.error('[email] sendRoleRejectedEmail failed:', err));
-  }
+    // Resolve inside a transaction
+    await prisma.$transaction(async (tx) => {
+        // Update request status + stamp reviewer
+        await tx.roleChangeRequest.update({
+            where: { id },
+            data: {
+                status: action === 'APPROVE' ? 'APPROVED' : 'REJECTED',
+                reviewedAt: new Date(),
+                reviewedById: session.user.id,
+            },
+        });
 
-  return NextResponse.json({ success: true });
+        // If approved — upgrade user's role, MHPSS level, org, and certificate
+        if (action === 'APPROVE') {
+            await tx.user.update({
+                where: { id: roleRequest.userId },
+                data: {
+                    role: roleRequest.toRole as UserType,
+                    // requestedMhpssLevel is already typed as MhpssLevel? in schema — no cast needed
+                    ...(roleRequest.requestedMhpssLevel
+                        ? { mhpssLevel: roleRequest.requestedMhpssLevel }
+                        : {}),
+                    ...(roleRequest.requestedResponderOrganization
+                        ? {
+                              responderOrganization:
+                                  roleRequest.requestedResponderOrganization,
+                          }
+                        : {}),
+                    ...(roleRequest.requestedMhpssCertificateFileUrl
+                        ? {
+                              mhpssCertificateFileUrl:
+                                  roleRequest.requestedMhpssCertificateFileUrl,
+                          }
+                        : {}),
+                },
+            });
+        }
+    });
+
+    // Send notification email to the requesting user (fire-and-forget)
+    const { name, email } = roleRequest.user;
+
+    if (action === 'APPROVE') {
+        sendRoleApprovedEmail({
+            userName: name,
+            userEmail: email,
+            newRole: roleRequest.toRole,
+        }).catch((err) =>
+            console.error('[email] sendRoleApprovedEmail failed:', err)
+        );
+    } else {
+        sendRoleRejectedEmail({
+            userName: name,
+            userEmail: email,
+            toRole: roleRequest.toRole,
+            reason: reason ?? null,
+        }).catch((err) =>
+            console.error('[email] sendRoleRejectedEmail failed:', err)
+        );
+    }
+
+    return NextResponse.json({ success: true });
 }

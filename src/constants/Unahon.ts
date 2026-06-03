@@ -50,7 +50,8 @@ export const redRows = [
     },
     {
         number: 5,
-        description: '<b>...nagsasabi na nais niyang magpakamatay.</b><i> (...expressing suicidal thoughts.)</i>',
+        description:
+            '<b>...nagsasabi na nais niyang magpakamatay.</b><i> (...expressing suicidal thoughts.)</i>',
         span: 0,
     },
     {
@@ -238,19 +239,20 @@ export const greenInterventions = [
 // wrapper for all sections
 export const unahonSections = [
     {
-        questions: redRows,
-        interventions: redInterventions,
-        color: 'red',
+        questions: greenRows,
+        interventions: greenInterventions,
+        color: 'green',
     },
     {
         questions: yellowRows,
         interventions: yellowInterventions,
         color: 'yellow',
     },
+
     {
-        questions: greenRows,
-        interventions: greenInterventions,
-        color: 'green',
+        questions: redRows,
+        interventions: redInterventions,
+        color: 'red',
     },
 ];
 

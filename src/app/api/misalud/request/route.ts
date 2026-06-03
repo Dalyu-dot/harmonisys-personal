@@ -8,14 +8,21 @@ export async function POST(request: NextRequest) {
         const session = await auth();
 
         if (!session?.user?.id) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+            return NextResponse.json(
+                { error: 'Unauthorized' },
+                { status: 401 }
+            );
         }
 
         const body = await request.json();
-        const { fullName, age, address, requestedRole, teamName, teamId } = body;
+        const { fullName, age, address, requestedRole, teamName, teamId } =
+            body;
 
         if (!fullName || !age || !address || !requestedRole) {
-            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+            return NextResponse.json(
+                { error: 'Missing required fields' },
+                { status: 400 }
+            );
         }
 
         const existing = await prisma.miSaludRequest.findFirst({
@@ -23,37 +30,53 @@ export async function POST(request: NextRequest) {
         });
 
         if (existing) {
-            return NextResponse.json({ error: 'You already have a pending request' }, { status: 400 });
+            return NextResponse.json(
+                { error: 'You already have a pending request' },
+                { status: 400 }
+            );
         }
 
         // ── TEAM LEADER → notify all admins ──────────────────────────────────
         if (requestedRole === 'TEAM_LEADER') {
             if (!teamName) {
-                return NextResponse.json({ error: 'Team name is required for Team Leader' }, { status: 400 });
-            }
-
-            const existingTeam = await prisma.miSaludTeam.findFirst({
-                where: { name: { equals: teamName.trim(), mode: 'insensitive' } },
-            });
-
-            if (existingTeam) {
                 return NextResponse.json(
-                    { error: 'Team/Department Name already exists or is already taken.' },
+                    { error: 'Team name is required for Team Leader' },
                     { status: 400 }
                 );
             }
 
-            const existingPendingRequest = await prisma.miSaludRequest.findFirst({
+            const existingTeam = await prisma.miSaludTeam.findFirst({
                 where: {
-                    teamName: { equals: teamName.trim(), mode: 'insensitive' },
-                    requestedRole: 'TEAM_LEADER',
-                    status: 'PENDING',
+                    name: { equals: teamName.trim(), mode: 'insensitive' },
                 },
             });
 
+            if (existingTeam) {
+                return NextResponse.json(
+                    {
+                        error: 'Team/Department Name already exists or is already taken.',
+                    },
+                    { status: 400 }
+                );
+            }
+
+            const existingPendingRequest =
+                await prisma.miSaludRequest.findFirst({
+                    where: {
+                        teamName: {
+                            equals: teamName.trim(),
+                            mode: 'insensitive',
+                        },
+                        requestedRole: 'TEAM_LEADER',
+                        status: 'PENDING',
+                    },
+                });
+
             if (existingPendingRequest) {
                 return NextResponse.json(
-                    { error: 'A pending registration already uses this Team/Department Name.' },
+                    {
+                        error: 'A pending registration already uses this Team/Department Name.',
+                    },
                     { status: 400 }
                 );
             }
@@ -88,14 +111,18 @@ export async function POST(request: NextRequest) {
 
             return NextResponse.json({
                 success: true,
-                message: 'Your team registration has been submitted. Please wait for admin approval.',
+                message:
+                    'Your team registration has been submitted. Please wait for admin approval.',
             });
         }
 
         // ── TEAM MEMBER → notify the team leader ─────────────────────────────
         if (requestedRole === 'TEAM_MEMBER') {
             if (!teamId) {
-                return NextResponse.json({ error: 'Team selection is required' }, { status: 400 });
+                return NextResponse.json(
+                    { error: 'Team selection is required' },
+                    { status: 400 }
+                );
             }
 
             const team = await prisma.miSaludTeam.findUnique({
@@ -103,7 +130,10 @@ export async function POST(request: NextRequest) {
             });
 
             if (!team) {
-                return NextResponse.json({ error: 'Selected team not found' }, { status: 404 });
+                return NextResponse.json(
+                    { error: 'Selected team not found' },
+                    { status: 404 }
+                );
             }
 
             const newRequest = await prisma.miSaludRequest.create({
@@ -130,14 +160,17 @@ export async function POST(request: NextRequest) {
 
             return NextResponse.json({
                 success: true,
-                message: 'Your request has been submitted. Please wait for your team leader to approve your request.',
+                message:
+                    'Your request has been submitted. Please wait for your team leader to approve your request.',
             });
         }
 
         return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
-
     } catch (error) {
         console.error('Error creating MiSalud request:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+        return NextResponse.json(
+            { error: 'Internal server error' },
+            { status: 500 }
+        );
     }
 }

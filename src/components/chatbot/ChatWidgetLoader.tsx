@@ -3,9 +3,9 @@
 import dynamic from 'next/dynamic';
 
 const ChatWidget = dynamic(() => import('./ChatWidget'), {
-  ssr: false,
+    ssr: false,
 });
 
 export default function ChatWidgetLoader() {
-  return <ChatWidget />;
+    return <ChatWidget />;
 }

@@ -72,16 +72,16 @@ export interface UnahonGuideProps {
 }
 
 export interface FormRow {
-  id: string;
-  key: string;
-  'client-id': string;
-  location: string; // ✅ ADD THIS
-  'responder-name': string;
-  date: string;
-  affiliation: string;
-  'assessment-type': AssessmentType;
-  confidentialForm: any;
-  checklist: any;
+    id: string;
+    key: string;
+    'client-id': string;
+    location: string; // ✅ ADD THIS
+    'responder-name': string;
+    date: string;
+    affiliation: string;
+    'assessment-type': AssessmentType;
+    confidentialForm: any;
+    checklist: any;
 }
 
 export interface UnahonFormEntry {

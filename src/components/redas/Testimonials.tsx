@@ -94,23 +94,24 @@ const Testimonials = () => {
                 <Tab key="software" title="Software Testimonials">
                     <div className="relative mt-4">
                         <Card className="bg-white/80 backdrop-blur-sm border border-blue-200 shadow-md h-[170px] sm:h-[190px] flex flex-col">
-                        <CardBody className="p-6 flex-1 overflow-hidden">
-                            <div className="h-full overflow-y-auto pr-2">
-                            <p className="text-slate-700 italic text-base leading-relaxed">
-                                &quot;{testimonials[currentIndex]?.quote}&quot;
-                            </p>
-                            </div>
-                        </CardBody>
+                            <CardBody className="p-6 flex-1 overflow-hidden">
+                                <div className="h-full overflow-y-auto pr-2">
+                                    <p className="text-slate-700 italic text-base leading-relaxed">
+                                        &quot;
+                                        {testimonials[currentIndex]?.quote}
+                                        &quot;
+                                    </p>
+                                </div>
+                            </CardBody>
 
-                        <Divider className="bg-blue-200" />
+                            <Divider className="bg-blue-200" />
 
-                        <CardFooter className="p-4 mt-auto">
-                            <p className="text-sm font-semibold text-blue-900">
-                            {testimonials[currentIndex]?.author}
-                            </p>
-                        </CardFooter>
+                            <CardFooter className="p-4 mt-auto">
+                                <p className="text-sm font-semibold text-blue-900">
+                                    {testimonials[currentIndex]?.author}
+                                </p>
+                            </CardFooter>
                         </Card>
-
 
                         <div className="flex justify-between items-center mt-6">
                             <Button
@@ -150,23 +151,24 @@ const Testimonials = () => {
                 <Tab key="training" title="Training Testimonials">
                     <div className="relative mt-4">
                         <Card className="bg-white/80 backdrop-blur-sm border border-blue-200 shadow-md h-[170px] sm:h-[190px] flex flex-col">
-                        <CardBody className="p-6 flex-1 overflow-hidden">
-                            <div className="h-full overflow-y-auto pr-2">
-                            <p className="text-slate-700 italic text-base leading-relaxed">
-                                &quot;{testimonials[currentIndex]?.quote}&quot;
-                            </p>
-                            </div>
-                        </CardBody>
+                            <CardBody className="p-6 flex-1 overflow-hidden">
+                                <div className="h-full overflow-y-auto pr-2">
+                                    <p className="text-slate-700 italic text-base leading-relaxed">
+                                        &quot;
+                                        {testimonials[currentIndex]?.quote}
+                                        &quot;
+                                    </p>
+                                </div>
+                            </CardBody>
 
-                        <Divider className="bg-blue-200" />
+                            <Divider className="bg-blue-200" />
 
-                        <CardFooter className="p-4 mt-auto">
-                            <p className="text-sm font-semibold text-blue-900">
-                            {testimonials[currentIndex]?.author}
-                            </p>
-                        </CardFooter>
+                            <CardFooter className="p-4 mt-auto">
+                                <p className="text-sm font-semibold text-blue-900">
+                                    {testimonials[currentIndex]?.author}
+                                </p>
+                            </CardFooter>
                         </Card>
-
 
                         <div className="flex justify-between items-center mt-6">
                             <Button

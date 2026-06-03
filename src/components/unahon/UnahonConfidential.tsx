@@ -99,12 +99,18 @@ const UnahonConfidential: React.FC<UnahonConfidentialProps> = ({
                                     </option>
 
                                     {confidentialForm.client && (
-                                        <option value={confidentialForm.client} hidden>
+                                        <option
+                                            value={confidentialForm.client}
+                                            hidden
+                                        >
                                             {confidentialForm.client}
                                         </option>
                                     )}
 
-                                    {(confidentialForm.availablePatientIds || []).map((code) => (
+                                    {(
+                                        confidentialForm.availablePatientIds ||
+                                        []
+                                    ).map((code) => (
                                         <option key={code} value={code}>
                                             {code}
                                         </option>
@@ -128,7 +134,9 @@ const UnahonConfidential: React.FC<UnahonConfidentialProps> = ({
                                     }}
                                 >
                                     <Radio
-                                        value={AssessmentType.INITIAL_ASSESSMENT}
+                                        value={
+                                            AssessmentType.INITIAL_ASSESSMENT
+                                        }
                                         classNames={{
                                             base: 'flex items-center gap-2',
                                             wrapper:
@@ -228,7 +236,10 @@ const UnahonConfidential: React.FC<UnahonConfidentialProps> = ({
                             <Input
                                 id="affiliation"
                                 isDisabled
-                                value={confidentialForm.affiliation || 'No organization provided'}
+                                value={
+                                    confidentialForm.affiliation ||
+                                    'No organization provided'
+                                }
                                 variant="bordered"
                                 className="font-medium"
                                 classNames={{

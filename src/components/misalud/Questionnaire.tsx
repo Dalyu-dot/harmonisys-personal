@@ -152,8 +152,7 @@ const Questionnaire: React.FC<QuestionnaireProps> = ({
     };
 
     return (
-  <div className="max-w-4xl">
-
+        <div className="max-w-4xl">
             <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Status Messages */}
                 {submitStatus === 'error' && (
@@ -231,7 +230,6 @@ const Questionnaire: React.FC<QuestionnaireProps> = ({
                                 classNames={{
                                     input: 'text-gray-900',
                                     label: 'text-gray-700 font-medium',
-                                    
                                 }}
                             />
                         </div>
@@ -256,67 +254,72 @@ const Questionnaire: React.FC<QuestionnaireProps> = ({
 
                 {/* Health Assessment Questions */}
                 {/* Health Assessment Questions */}
-<div className="space-y-4">
-  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-3 px-1">
-    <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-    Wellness Assessment Questions
-  </h3>
+                <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-3 px-1">
+                        <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                        Wellness Assessment Questions
+                    </h3>
 
-  <div className="space-y-6">
-    {QUESTIONS.map((q) => (
-      <Card
-        key={q.id}
-        className="border border-emerald-200/70 bg-white/85 backdrop-blur-sm shadow-md hover:shadow-xl transition-all duration-200"
-        >
-
-        <CardBody className="p-6">
-          <div className="flex items-start gap-4 mb-4">
-            <div
-              className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center
+                    <div className="space-y-6">
+                        {QUESTIONS.map((q) => (
+                            <Card
+                                key={q.id}
+                                className="border border-emerald-200/70 bg-white/85 backdrop-blur-sm shadow-md hover:shadow-xl transition-all duration-200"
+                            >
+                                <CardBody className="p-6">
+                                    <div className="flex items-start gap-4 mb-4">
+                                        <div
+                                            className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center
                          bg-gradient-to-br from-emerald-600 via-emerald-500 to-teal-500
                          shadow-md ring-1 ring-white/60"
-            >
-              {getWellnessIcon(q.id)}
-            </div>
+                                        >
+                                            {getWellnessIcon(q.id)}
+                                        </div>
 
-            <div className="flex-1">
-              <h4 className="font-semibold text-gray-800 text-base leading-relaxed">
-                {q.id}. {q.text}
-              </h4>
-            </div>
-          </div>
+                                        <div className="flex-1">
+                                            <h4 className="font-semibold text-gray-800 text-base leading-relaxed">
+                                                {q.id}. {q.text}
+                                            </h4>
+                                        </div>
+                                    </div>
 
-          <div className="space-y-3 ml-14">
-            {q.options.map((opt, idx) => (
-              <label
-                key={idx}
-                className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/80 ${
-                  responses[q.id] === opt
-                    ? 'bg-emerald-50 border-2 border-emerald-200 shadow-sm'
-                    : 'bg-white/50 border border-gray-200 hover:border-emerald-200'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name={`question-${q.id}`}
-                  value={opt}
-                  checked={responses[q.id] === opt}
-                  onChange={() => handleOptionChange(q.id, opt)}
-                  required
-                  className="mt-1 w-4 h-4 text-emerald-600 border-gray-300 focus:ring-emerald-500 focus:ring-2"
-                />
-                <span className="text-gray-700 leading-relaxed font-medium">
-                  {opt}
-                </span>
-              </label>
-            ))}
-          </div>
-        </CardBody>
-      </Card>
-    ))}
-  </div>
-</div>
-
+                                    <div className="space-y-3 ml-14">
+                                        {q.options.map((opt, idx) => (
+                                            <label
+                                                key={idx}
+                                                className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/80 ${
+                                                    responses[q.id] === opt
+                                                        ? 'bg-emerald-50 border-2 border-emerald-200 shadow-sm'
+                                                        : 'bg-white/50 border border-gray-200 hover:border-emerald-200'
+                                                }`}
+                                            >
+                                                <input
+                                                    type="radio"
+                                                    name={`question-${q.id}`}
+                                                    value={opt}
+                                                    checked={
+                                                        responses[q.id] === opt
+                                                    }
+                                                    onChange={() =>
+                                                        handleOptionChange(
+                                                            q.id,
+                                                            opt
+                                                        )
+                                                    }
+                                                    required
+                                                    className="mt-1 w-4 h-4 text-emerald-600 border-gray-300 focus:ring-emerald-500 focus:ring-2"
+                                                />
+                                                <span className="text-gray-700 leading-relaxed font-medium">
+                                                    {opt}
+                                                </span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </CardBody>
+                            </Card>
+                        ))}
+                    </div>
+                </div>
 
                 {/* Action Buttons */}
                 <div className="flex justify-end gap-4">

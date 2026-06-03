@@ -12,8 +12,6 @@ import UnahonOverview from './unahon/UnahonOverview';
 import MiSaludOverview from './misalud/MiSaludOverview';
 import HazardHunterOverview from './hazardhunter/HazardHunterOverview';
 
-
-
 interface ToolOverviewProps {
     name: string;
     subheading?: string;
@@ -26,36 +24,34 @@ interface ToolOverviewProps {
     userRole?: 'ADMIN' | 'RESPONDER' | 'STANDARD' | string; // ✅ ADD THIS
 }
 
-
 // Theme configuration for different tools
 const getToolTheme = (toolName: string) => {
     const name = toolName.toLowerCase();
 
     if (name.includes('hazard')) {
-  return {
-    // Background: soft earth tones
-    background: 'bg-gradient-to-br from-stone-50 via-amber-50 to-orange-50',
+        return {
+            // Background: soft earth tones
+            background:
+                'bg-gradient-to-br from-stone-50 via-amber-50 to-orange-50',
 
-    // Title gradient: dark soil → clay brown
-    headerGradient: 'from-[#3B2F2F] via-[#5A3E2B] to-[#7C4A2D]',
+            // Title gradient: dark soil → clay brown
+            headerGradient: 'from-[#3B2F2F] via-[#5A3E2B] to-[#7C4A2D]',
 
-    // Primary CTA (main feature button)
-    primaryGradient: 'from-[#5A3E2B] to-[#7C4A2D]',
-    primaryHoverGradient: 'from-[#4A3223] to-[#6B3F28]',
+            // Primary CTA (main feature button)
+            primaryGradient: 'from-[#5A3E2B] to-[#7C4A2D]',
+            primaryHoverGradient: 'from-[#4A3223] to-[#6B3F28]',
 
-    // Icons (About / Available Features)
-    secondaryGradient: 'from-[#6B3F28] to-[#8B5E34]',
-    tertiaryGradient: 'from-[#7C4A2D] to-[#A16207]',
+            // Icons (About / Available Features)
+            secondaryGradient: 'from-[#6B3F28] to-[#8B5E34]',
+            tertiaryGradient: 'from-[#7C4A2D] to-[#A16207]',
 
-    // Accent chip (subtle sand tone)
-    chipColor: 'bg-amber-100 text-[#5A3E2B]',
+            // Accent chip (subtle sand tone)
+            chipColor: 'bg-amber-100 text-[#5A3E2B]',
 
-    // Left border accent in description
-    accentColor: 'border-amber-300',
-  };
-}
-
-
+            // Left border accent in description
+            accentColor: 'border-amber-300',
+        };
+    }
 
     if (name.includes('irs') || name.includes('incident')) {
         return {
@@ -68,10 +64,9 @@ const getToolTheme = (toolName: string) => {
             chipColor: 'bg-[#8B1538]/10 text-[#8B1538]',
             accentColor: 'border-[#8B1538]/20',
         };
-        }
+    }
 
-
-        if (name.includes('unahon')) {
+    if (name.includes('unahon')) {
         return {
             // Background: soft red wash (very minimal yellow)
             background: 'bg-gradient-to-br from-rose-50 via-red-50 to-red-100',
@@ -93,26 +88,25 @@ const getToolTheme = (toolName: string) => {
             // Left border accent in description
             accentColor: 'border-red-300',
         };
-        }
+    }
 
-        
-
-
-        if (name.includes('misalud') || name.includes('mi-salud') || name.includes('mi salud')) {
-            return {
-                background: 'bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50',
-                headerGradient: 'from-[#065F46] via-[#047857] to-[#059669]',
-                primaryGradient: 'from-[#059669] to-[#10B981]',
-                primaryHoverGradient: 'from-[#047857] to-[#059669]',
-                secondaryGradient: 'from-[#047857] to-[#059669]',
-                tertiaryGradient: 'from-[#10B981] to-[#34D399]',
-                chipColor: 'bg-emerald-100 text-[#065F46]',
-                accentColor: 'border-emerald-300',
-            };
-        }
-
-
-
+    if (
+        name.includes('misalud') ||
+        name.includes('mi-salud') ||
+        name.includes('mi salud')
+    ) {
+        return {
+            background:
+                'bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50',
+            headerGradient: 'from-[#065F46] via-[#047857] to-[#059669]',
+            primaryGradient: 'from-[#059669] to-[#10B981]',
+            primaryHoverGradient: 'from-[#047857] to-[#059669]',
+            secondaryGradient: 'from-[#047857] to-[#059669]',
+            tertiaryGradient: 'from-[#10B981] to-[#34D399]',
+            chipColor: 'bg-emerald-100 text-[#065F46]',
+            accentColor: 'border-emerald-300',
+        };
+    }
 
     // Default theme (MiSalud style for health-related tools)
     return {
@@ -138,7 +132,6 @@ const ToolOverview = ({
     protectedRoutes = urls,
     userRole,
 }: ToolOverviewProps) => {
-
     if (name.toLowerCase() === 'redas') {
         return (
             <REDASOverview
@@ -150,77 +143,75 @@ const ToolOverview = ({
         );
     }
 
-        if (name.toLowerCase().includes('irs') || name.toLowerCase().includes('incident')) {
-    return (
-        <IRSOverview
-            name={name}
-            subheading={subheading}
-            description={description}
-            imageUrl={imageUrl}
-            urls={urls}
-            isAuthenticated={isAuthenticated}
-            protectedRoutes={protectedRoutes}
-            userRole={userRole} // ✅ ADD THIS
-        />
-    );
-}
-
-
-        if (name.toLowerCase().includes('unahon')) {
+    if (
+        name.toLowerCase().includes('irs') ||
+        name.toLowerCase().includes('incident')
+    ) {
         return (
-            <UnahonOverview
-            name={name}
-            subheading={subheading}
-            description={description}
-            subdescription={subdescription}
-            imageUrl={imageUrl}
-            urls={urls}
-            isAuthenticated={isAuthenticated}
-            protectedRoutes={protectedRoutes}
-            userRole={userRole}
+            <IRSOverview
+                name={name}
+                subheading={subheading}
+                description={description}
+                imageUrl={imageUrl}
+                urls={urls}
+                isAuthenticated={isAuthenticated}
+                protectedRoutes={protectedRoutes}
+                userRole={userRole} // ✅ ADD THIS
             />
         );
-        }
+    }
 
-        // ✅ ADD THIS (MiSalud uses the new IRS-style layout)
-        if (
+    if (name.toLowerCase().includes('unahon')) {
+        return (
+            <UnahonOverview
+                name={name}
+                subheading={subheading}
+                description={description}
+                subdescription={subdescription}
+                imageUrl={imageUrl}
+                urls={urls}
+                isAuthenticated={isAuthenticated}
+                protectedRoutes={protectedRoutes}
+                userRole={userRole}
+            />
+        );
+    }
+
+    // ✅ ADD THIS (MiSalud uses the new IRS-style layout)
+    if (
         name.toLowerCase().includes('misalud') ||
         name.toLowerCase().includes('mi-salud') ||
         name.toLowerCase().includes('mi salud')
-        ) {
+    ) {
         return (
             <MiSaludOverview
-            name={name}
-            subheading={subheading}
-            description={description}
-            subdescription={subdescription}
-            imageUrl={imageUrl}
-            urls={urls}
-            isAuthenticated={isAuthenticated}
-            protectedRoutes={protectedRoutes}
+                name={name}
+                subheading={subheading}
+                description={description}
+                subdescription={subdescription}
+                imageUrl={imageUrl}
+                urls={urls}
+                isAuthenticated={isAuthenticated}
+                protectedRoutes={protectedRoutes}
             />
         );
-        }
+    }
 
-                // ✅ ADD THIS BLOCK FOR HAZARDHUNTER
-        if (name.toLowerCase().includes('hazard')) {
+    // ✅ ADD THIS BLOCK FOR HAZARDHUNTER
+    if (name.toLowerCase().includes('hazard')) {
         return (
             <HazardHunterOverview
-            name={name}
-            subheading={subheading}
-            description={description}
-            subdescription={subdescription}
-            imageUrl={imageUrl}
-            urls={urls}
-            isAuthenticated={isAuthenticated}
-            protectedRoutes={protectedRoutes}
+                name={name}
+                subheading={subheading}
+                description={description}
+                subdescription={subdescription}
+                imageUrl={imageUrl}
+                urls={urls}
+                isAuthenticated={isAuthenticated}
+                protectedRoutes={protectedRoutes}
             />
         );
-        }
-
-
-
-
+    }
 
     if (!subheading) {
         subheading =
@@ -254,24 +245,25 @@ const ToolOverview = ({
                 {/* Main Content Grid */}
                 <div className="grid lg:grid-cols-2 gap-8">
                     {/* Image Section */}
-                <Card className="bg-white/60 backdrop-blur-sm shadow-lg border border-white/20">
-                <CardBody className="p-0">
-                    <div className="flex items-center justify-center h-full min-h-[360px] sm:min-h-[420px]">
-                    <div className="relative w-[260px] sm:w-[320px] lg:w-[380px] aspect-square">
-                        <Image
-                        src={imageUrl || '/placeholder.svg?height=600&width=600'}
-                        alt={`${name} Preview`}
-                        fill
-                        className="object-contain"
-                        sizes="(max-width: 768px) 320px, 380px"
-                        priority
-                        />
-                    </div>
-                    </div>
-                </CardBody>
-                </Card>
-
-
+                    <Card className="bg-white/60 backdrop-blur-sm shadow-lg border border-white/20">
+                        <CardBody className="p-0">
+                            <div className="flex items-center justify-center h-full min-h-[360px] sm:min-h-[420px]">
+                                <div className="relative w-[260px] sm:w-[320px] lg:w-[380px] aspect-square">
+                                    <Image
+                                        src={
+                                            imageUrl ||
+                                            '/placeholder.svg?height=600&width=600'
+                                        }
+                                        alt={`${name} Preview`}
+                                        fill
+                                        className="object-contain"
+                                        sizes="(max-width: 768px) 320px, 380px"
+                                        priority
+                                    />
+                                </div>
+                            </div>
+                        </CardBody>
+                    </Card>
 
                     {/* Content Section */}
                     <div className="space-y-6">

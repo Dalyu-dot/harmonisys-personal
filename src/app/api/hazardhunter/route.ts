@@ -37,9 +37,7 @@ export async function POST(request: NextRequest) {
         console.error('HazardHunter API error:', error);
 
         const errorMessage =
-            error instanceof Error
-                ? error.message
-                : 'Internal server error';
+            error instanceof Error ? error.message : 'Internal server error';
 
         return NextResponse.json(
             {

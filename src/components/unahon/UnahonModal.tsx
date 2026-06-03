@@ -34,11 +34,11 @@ const UnahonModal: React.FC<UnahonModalProps> = ({
     };
 
     const normalizedCompetency: number | undefined =
-    competency == null
-        ? undefined
-        : typeof competency === 'string'
-        ? competencyMap[competency] ?? Number(competency)
-        : competency;
+        competency == null
+            ? undefined
+            : typeof competency === 'string'
+              ? (competencyMap[competency] ?? Number(competency))
+              : competency;
 
     console.log('UnahonModal competency:', competency);
     console.log('UnahonModal normalizedCompetency:', normalizedCompetency);
@@ -60,9 +60,9 @@ const UnahonModal: React.FC<UnahonModalProps> = ({
             ].checklist
                 .map((_, i) => {
                     return normalizedCompetency !== undefined &&
-                        unahonSections[index].interventions[rowNumber].competencies[
-                            i
-                        ].includes(normalizedCompetency)
+                        unahonSections[index].interventions[
+                            rowNumber
+                        ].competencies[i].includes(normalizedCompetency)
                         ? i
                         : -1;
                 })
@@ -148,14 +148,19 @@ const UnahonModal: React.FC<UnahonModalProps> = ({
                                 <div className="space-y-4">
                                     {(() => {
                                         const hasMatchingInterventions =
-                                        normalizedCompetency !== undefined &&
-                                        unahonSections[index].interventions[
-                                            rowNumber
-                                        ].checklist.some((_, i) =>
-                                            unahonSections[index].interventions[rowNumber].competencies[
-                                                i
-                                            ].includes(normalizedCompetency)
-                                        );
+                                            normalizedCompetency !==
+                                                undefined &&
+                                            unahonSections[index].interventions[
+                                                rowNumber
+                                            ].checklist.some((_, i) =>
+                                                unahonSections[
+                                                    index
+                                                ].interventions[
+                                                    rowNumber
+                                                ].competencies[i].includes(
+                                                    normalizedCompetency
+                                                )
+                                            );
 
                                         if (!hasMatchingInterventions) {
                                             return (
@@ -173,10 +178,17 @@ const UnahonModal: React.FC<UnahonModalProps> = ({
                                         ].checklist.map(
                                             (intervention, checklist_index) => {
                                                 if (
-                                                    normalizedCompetency !== undefined &&
-                                                    unahonSections[index].interventions[rowNumber].competencies[
+                                                    normalizedCompetency !==
+                                                        undefined &&
+                                                    unahonSections[
+                                                        index
+                                                    ].interventions[
+                                                        rowNumber
+                                                    ].competencies[
                                                         checklist_index
-                                                    ].includes(normalizedCompetency)
+                                                    ].includes(
+                                                        normalizedCompetency
+                                                    )
                                                 ) {
                                                     return (
                                                         <div
@@ -231,14 +243,19 @@ const UnahonModal: React.FC<UnahonModalProps> = ({
                                     onPress={onDone}
                                     isDisabled={(() => {
                                         const hasMatchingInterventions =
-                                        normalizedCompetency !== undefined &&
-                                        unahonSections[index].interventions[
-                                            rowNumber
-                                        ].checklist.some((_, i) =>
-                                            unahonSections[index].interventions[rowNumber].competencies[
-                                                i
-                                            ].includes(normalizedCompetency)
-                                        );
+                                            normalizedCompetency !==
+                                                undefined &&
+                                            unahonSections[index].interventions[
+                                                rowNumber
+                                            ].checklist.some((_, i) =>
+                                                unahonSections[
+                                                    index
+                                                ].interventions[
+                                                    rowNumber
+                                                ].competencies[i].includes(
+                                                    normalizedCompetency
+                                                )
+                                            );
 
                                         return (
                                             !hasMatchingInterventions ||

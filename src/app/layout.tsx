@@ -18,7 +18,7 @@ const geistMono = localFont({
 export const metadata: Metadata = {
     title: 'Harmonisys',
     description:
-        'An integrated web-based platform for Disaster Risk Reduction and Management (DRRM) that incorporates multiple DRRM tools.',
+        'An integrated web-based platform for Disaster Risk Reduction and Management (DRRM) that incorporates multiple DRRM-H tools.',
 };
 
 export default function RootLayout({
@@ -28,7 +28,9 @@ export default function RootLayout({
 }) {
     return (
         <html lang="en">
-            <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
+            <body
+                className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
+            >
                 <QueryProvider>
                     {children}
                     <ChatWidgetLoader />

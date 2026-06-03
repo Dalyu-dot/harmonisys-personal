@@ -11,7 +11,13 @@ import {
     FeatureGroup,
     useMap,
 } from 'react-leaflet';
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@heroui/react';
+import {
+    Modal,
+    ModalContent,
+    ModalHeader,
+    ModalBody,
+    ModalFooter,
+} from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import {
     getAllPlaceCoordinates,
@@ -336,7 +342,11 @@ const AllControls = ({
     );
 };
 
-const ZoomTracker = ({ setZoomLevel }: { setZoomLevel: (z: number) => void }) => {
+const ZoomTracker = ({
+    setZoomLevel,
+}: {
+    setZoomLevel: (z: number) => void;
+}) => {
     const map = useMap();
 
     useEffect(() => {
@@ -374,24 +384,24 @@ const Map = () => {
 
     // Move these functions to component scope
     const createCustomIcon = (
-    color: string,
-    baseSize: 'small' | 'medium' | 'large' = 'medium',
-    zoom: number
-) => {
-    // scale based on zoom level (VERY IMPORTANT FIX)
-    const zoomScale = Math.max(0.5, Math.min(1.2, zoom / 10));
+        color: string,
+        baseSize: 'small' | 'medium' | 'large' = 'medium',
+        zoom: number
+    ) => {
+        // scale based on zoom level (VERY IMPORTANT FIX)
+        const zoomScale = Math.max(0.5, Math.min(1.2, zoom / 10));
 
-    const sizeMap = {
-        small: 28,
-        medium: 36,
-        large: 44,
-    };
+        const sizeMap = {
+            small: 28,
+            medium: 36,
+            large: 44,
+        };
 
-    const base = sizeMap[baseSize];
-    const size = base * zoomScale;
+        const base = sizeMap[baseSize];
+        const size = base * zoomScale;
 
-    return L.divIcon({
-        html: `
+        return L.divIcon({
+            html: `
         <div style="
             width: ${size}px;
             height: ${size}px;
@@ -451,12 +461,12 @@ const Map = () => {
 
         </div>
         `,
-        className: 'custom-marker',
-        iconSize: [size, size],
-        iconAnchor: [size / 2, size],
-        popupAnchor: [0, -size],
-    });
-};
+            className: 'custom-marker',
+            iconSize: [size, size],
+            iconAnchor: [size / 2, size],
+            popupAnchor: [0, -size],
+        });
+    };
 
     const getMarkerStyle = (count: number) => {
         // 🔴 Very High: 21+
@@ -646,8 +656,9 @@ const Map = () => {
                             <ModalHeader>Confirm Fetch</ModalHeader>
                             <ModalBody>
                                 <p className="text-sm text-gray-600">
-                                    This will fetch updated training data from REDAS.
-                                    This process may take some time depending on the number of locations.
+                                    This will fetch updated training data from
+                                    REDAS. This process may take some time
+                                    depending on the number of locations.
                                 </p>
                             </ModalBody>
                             <ModalFooter>

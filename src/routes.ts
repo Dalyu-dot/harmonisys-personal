@@ -15,6 +15,6 @@ export const privateRoutes = [
     '/redas/appointment',
 
     // ✅ IRS Admin Incident Management
-  '/irs/incidents/manage',
-  '/irs/incidents/manage/:id',
+    '/irs/incidents/manage',
+    '/irs/incidents/manage/:id',
 ];

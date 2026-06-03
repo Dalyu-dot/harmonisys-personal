@@ -47,39 +47,51 @@ export async function GET() {
                 let scenario;
 
                 if (eventData['categoryID']) {
-                const categoryDocRef = doc(IRSdb, 'event-categories', String(eventData['categoryID']));
-                const categorySnap = await getDoc(categoryDocRef);
+                    const categoryDocRef = doc(
+                        IRSdb,
+                        'event-categories',
+                        String(eventData['categoryID'])
+                    );
+                    const categorySnap = await getDoc(categoryDocRef);
 
-                if (categorySnap.exists()) {
-                    category = {
-                    id: categorySnap.id,
-                    ...categorySnap.data(),
-                    };
-                }
+                    if (categorySnap.exists()) {
+                        category = {
+                            id: categorySnap.id,
+                            ...categorySnap.data(),
+                        };
+                    }
                 }
 
                 if (eventData['locationID']) {
-                const locationDocRef = doc(IRSdb, 'event-locations', String(eventData['locationID']));
-                const locationSnap = await getDoc(locationDocRef);
+                    const locationDocRef = doc(
+                        IRSdb,
+                        'event-locations',
+                        String(eventData['locationID'])
+                    );
+                    const locationSnap = await getDoc(locationDocRef);
 
-                if (locationSnap.exists()) {
-                    location = {
-                    id: locationSnap.id,
-                    ...locationSnap.data(),
-                    };
-                }
+                    if (locationSnap.exists()) {
+                        location = {
+                            id: locationSnap.id,
+                            ...locationSnap.data(),
+                        };
+                    }
                 }
 
                 if (eventData['scenarioID']) {
-                const scenarioDocRef = doc(IRSdb, 'event-scenarios', String(eventData['scenarioID']));
-                const scenarioSnap = await getDoc(scenarioDocRef);
+                    const scenarioDocRef = doc(
+                        IRSdb,
+                        'event-scenarios',
+                        String(eventData['scenarioID'])
+                    );
+                    const scenarioSnap = await getDoc(scenarioDocRef);
 
-                if (scenarioSnap.exists()) {
-                    scenario = {
-                    id: scenarioSnap.id,
-                    ...scenarioSnap.data(),
-                    };
-                }
+                    if (scenarioSnap.exists()) {
+                        scenario = {
+                            id: scenarioSnap.id,
+                            ...scenarioSnap.data(),
+                        };
+                    }
                 }
 
                 const data = {

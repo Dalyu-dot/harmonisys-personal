@@ -5,7 +5,11 @@ import { auth } from '@/lib/auth';
 
 // ── Notification helpers ───────────────────────────────────────────────────
 
-async function notifyMemberApproved(userId: string, teamName: string, requestId: string) {
+async function notifyMemberApproved(
+    userId: string,
+    teamName: string,
+    requestId: string
+) {
     await prisma.notification.create({
         data: {
             userId,
@@ -20,7 +24,12 @@ async function notifyMemberApproved(userId: string, teamName: string, requestId:
     });
 }
 
-async function notifyMemberRejected(userId: string, teamName: string, requestId: string, reason?: string) {
+async function notifyMemberRejected(
+    userId: string,
+    teamName: string,
+    requestId: string,
+    reason?: string
+) {
     await prisma.notification.create({
         data: {
             userId,
@@ -37,7 +46,11 @@ async function notifyMemberRejected(userId: string, teamName: string, requestId:
     });
 }
 
-async function notifyTeamApproved(userId: string, teamName: string, requestId: string) {
+async function notifyTeamApproved(
+    userId: string,
+    teamName: string,
+    requestId: string
+) {
     await prisma.notification.create({
         data: {
             userId,
@@ -52,7 +65,12 @@ async function notifyTeamApproved(userId: string, teamName: string, requestId: s
     });
 }
 
-async function notifyTeamRejected(userId: string, teamName: string, requestId: string, reason?: string) {
+async function notifyTeamRejected(
+    userId: string,
+    teamName: string,
+    requestId: string,
+    reason?: string
+) {
     await prisma.notification.create({
         data: {
             userId,
@@ -73,15 +91,15 @@ async function notifyTeamRejected(userId: string, teamName: string, requestId: s
 
 export async function PATCH(
     req: Request,
-     { params }: { params: Promise<{ id: string }> }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     const session = await auth();
-    
+
     if (!session?.user?.id) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await req.json() as {
+    const body = (await req.json()) as {
         status: 'APPROVED' | 'REJECTED';
         rejectionReason?: string;
     };
@@ -109,7 +127,12 @@ export async function PATCH(
     // ── 2. If approved → also upsert the membership row ─────────────────────
     if (body.status === 'APPROVED' && request.teamId) {
         await prisma.miSaludMembership.upsert({
-            where: { userId_teamId: { userId: request.userId, teamId: request.teamId } },
+            where: {
+                userId_teamId: {
+                    userId: request.userId,
+                    teamId: request.teamId,
+                },
+            },
             create: {
                 userId: request.userId,
                 teamId: request.teamId,
@@ -136,9 +159,19 @@ export async function PATCH(
         }
     } else {
         if (isTeamLeaderRequest) {
-            await notifyTeamRejected(request.userId, teamName, request.id, body.rejectionReason);
+            await notifyTeamRejected(
+                request.userId,
+                teamName,
+                request.id,
+                body.rejectionReason
+            );
         } else {
-            await notifyMemberRejected(request.userId, teamName, request.id, body.rejectionReason);
+            await notifyMemberRejected(
+                request.userId,
+                teamName,
+                request.id,
+                body.rejectionReason
+            );
         }
     }
 

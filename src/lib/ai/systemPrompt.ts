@@ -1,10 +1,10 @@
 // src/lib/ai/systemPrompt.ts
-import { APP_PROFILE, TOOLS, ToolKey } from "./knowledgeBase";
+import { APP_PROFILE, TOOLS, ToolKey } from './knowledgeBase';
 
 export function buildSystemPrompt(params?: { activeTool?: ToolKey | null }) {
-  const active = params?.activeTool ? TOOLS[params.activeTool] : null;
+    const active = params?.activeTool ? TOOLS[params.activeTool] : null;
 
-  const formatRules = `
+    const formatRules = `
 Formatting rules (must follow exactly):
 1) Output plain text only.
 2) Do NOT use markdown or markdown-like symbols: #, ##, ###, **, __, backticks, code fences, or "- " dash bullets.
@@ -15,7 +15,7 @@ Formatting rules (must follow exactly):
 7) Keep answers short and actionable.
 `.trim();
 
-const outputTemplate = `
+    const outputTemplate = `
 Output template:
 Title
 
@@ -29,29 +29,29 @@ If instructions are required, provide numbered steps like:
 Notes (optional) as plain sentences (no bullets).
 `.trim();
 
-  const toolBlock = active
-    ? `
+    const toolBlock = active
+        ? `
 Active tool: ${active.name}
-Subheading: ${active.subheading ?? "N/A"}
+Subheading: ${active.subheading ?? 'N/A'}
 
 Tool summary:
 ${active.description}
 
 Background (if any):
-${active.subdescription ?? "N/A"}
+${active.subdescription ?? 'N/A'}
 
 Purpose:
-${active.purpose.map((p, idx) => `${idx + 1}) ${p}`).join("\n")}
+${active.purpose.map((p, idx) => `${idx + 1}) ${p}`).join('\n')}
 
 Common user questions:
-${active.commonIntents.map((i, idx) => `${idx + 1}) ${i}`).join("\n")}
+${active.commonIntents.map((i, idx) => `${idx + 1}) ${i}`).join('\n')}
 
 Relevant routes:
-${active.routes.join(", ")}
+${active.routes.join(', ')}
 
-${active.faq?.length ? `FAQ topics: ${active.faq.map((f) => f.question).join(" | ")}` : ""}
+${active.faq?.length ? `FAQ topics: ${active.faq.map((f) => f.question).join(' | ')}` : ''}
 `.trim()
-    : `
+        : `
 If the user's module is unclear or outside scope, respond with exactly:
 
 Sorry, I can only assist with information related to Harmonisys and Disaster Risk Reduction and Management. Could you let me know which module this is about: IRS, Mi Salud, REDAS, Unahon, or HazardHunter?
@@ -59,15 +59,15 @@ Sorry, I can only assist with information related to Harmonisys and Disaster Ris
 Do not add anything else.
 `.trim();
 
-  return `
+    return `
 You are the official in-app assistant for ${APP_PROFILE.name}.
 Summary: ${APP_PROFILE.summary}
 
-Audience: ${APP_PROFILE.audience.join(", ")}
-Modules: ${APP_PROFILE.modules.join(", ")}
+Audience: ${APP_PROFILE.audience.join(', ')}
+Modules: ${APP_PROFILE.modules.join(', ')}
 
 Behavior rules:
-${APP_PROFILE.scopeRules.map((r) => `- ${r}`).join("\n")}
+${APP_PROFILE.scopeRules.map((r) => `- ${r}`).join('\n')}
 
 ${formatRules}
 

@@ -11,7 +11,9 @@ interface OtpEntry {
 }
 
 // Global singleton store (survives hot-reloads in Next.js dev via globalThis)
-const g = globalThis as typeof globalThis & { __otpStore?: Map<string, OtpEntry> };
+const g = globalThis as typeof globalThis & {
+    __otpStore?: Map<string, OtpEntry>;
+};
 if (!g.__otpStore) g.__otpStore = new Map();
 const store = g.__otpStore;
 

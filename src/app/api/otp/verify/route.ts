@@ -3,9 +3,8 @@ import { verifyOtp } from '@/lib/otp';
 
 export async function POST(req: NextRequest) {
     try {
-      const { email, code } = await req.json();
-console.log('verify-otp received:', { email, code });
-
+        const { email, code } = await req.json();
+        console.log('verify-otp received:', { email, code });
 
         if (!email || !code) {
             return NextResponse.json(
@@ -14,9 +13,8 @@ console.log('verify-otp received:', { email, code });
             );
         }
 
-   
-const result = verifyOtp(email, code);
-console.log('verify result:', result);
+        const result = verifyOtp(email, code);
+        console.log('verify result:', result);
 
         if (!result.ok) {
             const messages: Record<string, string> = {

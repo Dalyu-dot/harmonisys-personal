@@ -1,6 +1,6 @@
 # Harmonisys (Project Sakuna)
 
-An integrated web-based platform for Disaster Risk Reduction and Management (DRRM) that incorporates multiple DRRM tools for emergency response, health monitoring, hazard assessment, and resource management.
+An integrated web-based platform for Disaster Risk Reduction and Management (DRRM) that incorporates multiple DRRM-H tools for emergency response, health monitoring, hazard assessment, and resource management.
 
 ---
 
@@ -43,7 +43,7 @@ Harmonisys is a modular DRRM platform integrating tools for incident reporting, 
 
 ### 1. **Dashboard**
 
-- Centralized overview of DRRM tools and user data.
+- Centralized overview of DRR-H tools and user data.
 - Accessible after authentication.
 
 ### 2. **IRS (Incident Reporting System)**

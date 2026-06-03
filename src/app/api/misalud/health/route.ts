@@ -7,10 +7,7 @@ import type { SubmissionData } from '@/types';
 export async function POST(request: NextRequest) {
     const session = await auth();
     if (!session?.user?.id) {
-        return NextResponse.json(
-            { error: 'Unauthorized' },
-            { status: 401 }
-        );
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     try {
         const body: SubmissionData = await request.json();
@@ -55,7 +52,9 @@ export async function POST(request: NextRequest) {
 
         if (!approvedMembership) {
             return NextResponse.json(
-                { error: 'You do not have an approved Mi Salud membership yet' },
+                {
+                    error: 'You do not have an approved Mi Salud membership yet',
+                },
                 { status: 403 }
             );
         }
