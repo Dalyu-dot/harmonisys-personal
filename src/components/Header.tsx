@@ -724,26 +724,100 @@ const Header: React.FC<HeaderProps> = ({ session }) => {
                                                 />
                                             </button>
                                             {isToolsExpanded && (
-                                                <div className="ml-6 mt-1 space-y-1">
-                                                    {headerLinks.map((tool) => (
-                                                        <Link
-                                                            key={tool.title}
-                                                            href={tool.url}
-                                                            onClick={() =>
-                                                                setMobileMenuOpen(
-                                                                    false
-                                                                )
-                                                            }
-                                                            className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100"
-                                                        >
-                                                            {
+                                                <div
+                                                    className="mt-1 px-1 space-y-1"
+                                                    style={toolsCssVars}
+                                                >
+                                                    <p className="px-3 pt-1 pb-0.5 text-[10px] font-semibold tracking-widest uppercase text-gray-400">
+                                                        DRRM-H Tools
+                                                    </p>
+                                                    {footerLinks[0].links.map(
+                                                        (tool) => {
+                                                            const icon =
                                                                 toolIconMap[
                                                                     tool.title
-                                                                ]
-                                                            }
-                                                            {tool.title}
-                                                        </Link>
-                                                    ))}
+                                                                ] ?? (
+                                                                    <ShieldAlert className="w-4 h-4" />
+                                                                );
+                                                            return (
+                                                                <Link
+                                                                    key={
+                                                                        tool.title
+                                                                    }
+                                                                    href={
+                                                                        tool.url
+                                                                    }
+                                                                    onClick={() =>
+                                                                        setMobileMenuOpen(
+                                                                            false
+                                                                        )
+                                                                    }
+                                                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors"
+                                                                    style={{
+                                                                        color: 'var(--tool-accent)',
+                                                                    }}
+                                                                    onMouseEnter={(
+                                                                        e
+                                                                    ) => {
+                                                                        (
+                                                                            e.currentTarget as HTMLAnchorElement
+                                                                        ).style.backgroundColor =
+                                                                            'var(--tool-hover-bg)';
+                                                                    }}
+                                                                    onMouseLeave={(
+                                                                        e
+                                                                    ) => {
+                                                                        (
+                                                                            e.currentTarget as HTMLAnchorElement
+                                                                        ).style.backgroundColor =
+                                                                            '';
+                                                                    }}
+                                                                >
+                                                                    <div
+                                                                        className="p-2 rounded-lg shrink-0"
+                                                                        style={{
+                                                                            backgroundColor:
+                                                                                'var(--tool-icon-bg)',
+                                                                        }}
+                                                                    >
+                                                                        <span
+                                                                            style={{
+                                                                                color: 'var(--tool-accent)',
+                                                                            }}
+                                                                        >
+                                                                            {
+                                                                                icon
+                                                                            }
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="flex flex-col min-w-0">
+                                                                        <span className="font-medium text-sm text-gray-900 truncate">
+                                                                            {
+                                                                                tool.title
+                                                                            }
+                                                                        </span>
+                                                                        <span className="text-xs text-gray-500 truncate">
+                                                                            {tool.title ===
+                                                                                'Incident Reporting System' &&
+                                                                                'Real-time incident reporting'}
+                                                                            {tool.title ===
+                                                                                'REDAS' &&
+                                                                                'Earthquake hazard assessment'}
+                                                                            {tool.title ===
+                                                                                'Unahon' &&
+                                                                                'Mental health screening'}
+                                                                            {tool.title ===
+                                                                                'Mi Salud' &&
+                                                                                'Responder wellness tracking'}
+                                                                            {tool.title ===
+                                                                                'HazardHunter' &&
+                                                                                'Location-based hazard assessment'}
+                                                                        </span>
+                                                                    </div>
+                                                                </Link>
+                                                            );
+                                                        }
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
