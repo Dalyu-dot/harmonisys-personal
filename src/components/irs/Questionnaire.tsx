@@ -66,19 +66,37 @@ const Questionnaire = ({ onClose, openSuccessModal }: Props) => {
     >('idle');
     const [errorMessage, setErrorMessage] = useState<string>('');
 
+    const [locationError, setLocationError] = useState<string>('');
+
     useEffect(() => {
-        if (!navigator.geolocation) return;
+        if (!navigator.geolocation) {
+            setLocationError('Geolocation not supported by your browser.');
+            return;
+        }
 
         setIsLocating(true);
+        setLocationError('');
+
+        const timeoutId = setTimeout(() => {
+            setIsLocating(false);
+            setLocationError(
+                'Location request timed out. Please enter manually.'
+            );
+        }, 10000);
 
         navigator.geolocation.getCurrentPosition(
             async (position) => {
+                clearTimeout(timeoutId);
                 const { latitude, longitude } = position.coords;
 
                 try {
                     const res = await fetch(
-                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+                        { headers: { 'Accept-Language': 'en' } }
                     );
+
+                    if (!res.ok) throw new Error('Reverse geocode failed');
+
                     const data = await res.json();
 
                     if (data?.display_name) {
@@ -86,17 +104,39 @@ const Questionnaire = ({ onClose, openSuccessModal }: Props) => {
                             ...prev,
                             location: data.display_name,
                         }));
+                    } else {
+                        // Fallback: use raw coords
+                        setForm((prev) => ({
+                            ...prev,
+                            location: `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`,
+                        }));
                     }
                 } catch (err) {
-                    console.error('Location fetch error:', err);
+                    console.error('Reverse geocode error:', err);
+                    setForm((prev) => ({
+                        ...prev,
+                        location: `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`,
+                    }));
                 } finally {
+                    clearTimeout(timeoutId);
                     setIsLocating(false);
                 }
             },
             (error) => {
-                console.warn('Geolocation failed:', error);
+                clearTimeout(timeoutId);
                 setIsLocating(false);
-            }
+
+                const messages: Record<number, string> = {
+                    1: 'Location access denied. Please enter manually.',
+                    2: 'Location unavailable. Please enter manually.',
+                    3: 'Location request timed out. Please enter manually.',
+                };
+                setLocationError(
+                    messages[error.code] ??
+                        'Location failed. Please enter manually.'
+                );
+            },
+            { timeout: 8000, maximumAge: 60000, enableHighAccuracy: false }
         );
     }, []);
 
@@ -266,9 +306,11 @@ const Questionnaire = ({ onClose, openSuccessModal }: Props) => {
                                 onChange={handleChange}
                                 isDisabled={isSubmitting || isLocating}
                                 description={
-                                    isLocating
-                                        ? 'Auto-detecting your current location...'
-                                        : 'You can edit this manually (must include city)'
+                                    locationError
+                                        ? locationError
+                                        : isLocating
+                                          ? 'Auto-detecting your current location...'
+                                          : 'You can edit this manually (must include city)'
                                 }
                                 variant="bordered"
                                 className="font-medium"
