@@ -164,9 +164,9 @@ const IncidentsDashboard = ({
                                 className="h-14 w-full rounded-2xl border border-white/80 bg-white/95 px-5 text-[15px] font-semibold text-slate-800 shadow-[0_10px_30px_rgba(0,0,0,0.08)] outline-none transition-all duration-200 focus:border-[#7B122F] focus:ring-2 focus:ring-[#7B122F]/20"
                             >
                                 <option value="all">All Incidents</option>
-                                <option value="status-pending">Pending</option>
+                                <option value="status-pending">Ongoing</option>
                                 <option value="status-resolved">
-                                    Resolved
+                                    Completed
                                 </option>
                                 <option value="status-active">Active</option>
                             </select>
