@@ -49,6 +49,7 @@ import {
     updateUserResponderOrganization,
     updateUserRegion,
 } from '@/lib/action/user';
+import { notifyAdminAction } from '@/lib/action/adminEmail';
 
 import { MhpssLevel, UserType } from '@prisma/client';
 import {
@@ -67,59 +68,41 @@ import {
 import MHPSSLevel from '@/components/MHPSS';
 
 const maroonTheme = {
-    // ✅ no background image, just soft maroon gradient
     background: 'bg-gradient-to-br from-[#F9F3F5] via-[#F6E9EE] to-[#F3E2E7]',
-
     headerGradient: 'from-[#4A0707] via-[#6B0F0F] to-[#A11B1B]',
-
-    // ✅ white elevated title (shadow)
     title: 'text-white drop-shadow-[0_10px_18px_rgba(0,0,0,0.35)]',
     subtitle: 'text-white/85',
-
-    // elevated shell
     shell: 'bg-white/70 backdrop-blur-md border border-white/40 shadow-[0_20px_60px_rgba(42,6,13,0.22)]',
     innerPanel:
         'bg-white/70 border border-white/45 shadow-[0_10px_30px_rgba(42,6,13,0.10)]',
-
-    // tabs
     tabWrap: 'bg-white/70 border border-white/45',
     tabActive:
         'bg-gradient-to-r from-[#4A0707] via-[#6B0F0F] to-[#A11B1B] text-white border-transparent shadow-md',
     tabIdle:
         'bg-white/80 text-slate-700 border-slate-200 hover:bg-white hover:border-slate-300',
-
-    // ✅ gradient pills/cards on the right
     statPill:
         'bg-white/10 text-white border border-white/20 backdrop-blur-sm shadow-sm',
     legendBtn:
         'bg-white/15 text-white border border-white/25 backdrop-blur-sm shadow-sm hover:bg-white/20 transition-all',
-
     ghostBtn:
         'bg-white/85 text-[#7A0C1E] border border-[#7A0C1E]/20 hover:bg-[#B91C1C]/10 hover:border-[#B91C1C]/40 transition-all',
-
     filterBtn:
         'bg-white/85 text-[#7A0C1E] border-2 border-[#A11B1B]/30 hover:bg-[#A11B1B]/10 hover:border-[#A11B1B]/60 transition-all shadow-sm',
     dropdownMenu:
         'bg-white/95 backdrop-blur-sm border border-[#A11B1B]/15 shadow-[0_18px_50px_rgba(42,6,13,0.18)] rounded-2xl p-2',
     dropdownItem:
         'rounded-xl data-[hover=true]:bg-[#A11B1B]/10 data-[selectable=true]:focus:bg-[#A11B1B]/10',
-
-    // table styling
     th: 'bg-gradient-to-r from-[#F3E2E7] to-[#F7EEF1] text-[#2A060D] font-extrabold border-b border-white/60',
     td: 'py-4 border-b border-white/60',
     rowHover: 'hover:bg-[#B91C1C]/[0.04] transition-colors duration-200',
     chipPill:
         'rounded-full px-3 py-1.5 border border-black/5 bg-white/80 backdrop-blur-sm',
-
-    // action buttons
     actionBtnBase:
         'rounded-xl border border-slate-200 bg-white/85 shadow-sm hover:shadow-md transition-all duration-200',
     actionEdit:
         'text-[#B45309] hover:text-[#92400E] hover:bg-[#F59E0B]/10 hover:border-[#F59E0B]/25',
     actionDelete:
         'text-[#B91C1C] hover:text-[#7A0C1E] hover:bg-[#EF4444]/10 hover:border-[#EF4444]/25',
-
-    // pagination
     paginationWrap:
         'gap-1 overflow-visible h-10 rounded-xl border border-white/50 bg-white/80 backdrop-blur-sm shadow-lg',
     paginationItem:
@@ -174,7 +157,6 @@ const UserTable = () => {
     const router = useRouter();
     const [page, setPage] = useState(1);
     const [activeTab, setActiveTab] = useState<'USERS' | 'PENDING'>('USERS');
-    // ✅ Search & Filters
     const [searchTerm, setSearchTerm] = useState('');
     const [roleFilter, setRoleFilter] = useState<UserType | 'ALL'>('ALL');
     const [mhpssFilter, setMhpssFilter] = useState<number | 'NONE' | 'ALL'>(
@@ -183,6 +165,9 @@ const UserTable = () => {
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
     const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
     const [selectedUserName, setSelectedUserName] = useState<string | null>(
+        null
+    );
+    const [selectedUserEmail, setSelectedUserEmail] = useState<string | null>(
         null
     );
     const [isDeleting, setIsDeleting] = useState(false);
@@ -223,7 +208,6 @@ const UserTable = () => {
     >(null);
 
     const [editingRow, setEditingRow] = useState<string | null>(null);
-
     const [editingField, setEditingField] = useState<
         'role' | 'mhpssLevel' | 'responderOrganization' | 'region' | null
     >(null);
@@ -239,10 +223,9 @@ const UserTable = () => {
     const [editedRegion, setEditedRegion] = useState<{
         [key: string]: string | null;
     }>({});
-
     const [isUpdating, setIsUpdating] = useState(false);
-    const rowsPerPage = 10;
 
+    const rowsPerPage = 10;
     const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
     const { data, isLoading, mutate } = useSWR(
@@ -252,28 +235,23 @@ const UserTable = () => {
     );
 
     const pages = data?.count ? Math.ceil(data.count / rowsPerPage) : 0;
-
     const users = (data?.results as UserWithPending[]) || [];
 
     const filteredUsers = useMemo(() => {
         const q = searchTerm.trim().toLowerCase();
-
         return users.filter((u) => {
             const matchesSearch =
                 !q ||
                 (u.name ?? '').toLowerCase().includes(q) ||
                 (u.email ?? '').toLowerCase().includes(q);
-
             const matchesRole =
                 roleFilter === 'ALL' ? true : u.role === roleFilter;
-
             const matchesMHPSS =
                 mhpssFilter === 'ALL'
                     ? true
                     : mhpssFilter === 'NONE'
                       ? u.mhpssLevel == null
                       : u.mhpssLevel === levelMap[mhpssFilter as 1 | 2 | 3 | 4];
-
             return matchesSearch && matchesRole && matchesMHPSS;
         });
     }, [users, searchTerm, roleFilter, mhpssFilter]);
@@ -282,12 +260,10 @@ const UserTable = () => {
         try {
             setPendingLoading(true);
             setPendingMessage(null);
-
             const res = await fetch('/api/admin/users/role-requests', {
                 method: 'GET',
             });
             const json = await res.json().catch(() => null);
-
             if (!res.ok || !json?.success) {
                 setPendingMessage(
                     json?.message || 'Failed to load pending requests.'
@@ -295,7 +271,6 @@ const UserTable = () => {
                 setPendingRequests([]);
                 return;
             }
-
             setPendingRequests(json.data || []);
         } catch {
             setPendingMessage('Failed to load pending requests.');
@@ -320,7 +295,6 @@ const UserTable = () => {
             try {
                 setPendingLoading(true);
                 setPendingMessage(null);
-
                 const res = await fetch(
                     `/api/admin/users/role-requests/${id}`,
                     {
@@ -329,14 +303,11 @@ const UserTable = () => {
                         body: JSON.stringify({ action }),
                     }
                 );
-
                 const json = await res.json().catch(() => null);
-
                 if (!res.ok || !json?.success) {
                     setPendingMessage(json?.message || 'Action failed.');
                     return;
                 }
-
                 setPendingRequests((prev) => prev.filter((r) => r.id !== id));
                 mutate();
             } catch {
@@ -350,9 +321,7 @@ const UserTable = () => {
 
     const confirmRequestAction = useCallback(async () => {
         if (!selectedRequestId || !selectedRequestAction) return;
-
         await actOnRequest(selectedRequestId, selectedRequestAction);
-
         setRequestConfirmOpen(false);
         setSelectedRequestId(null);
         setSelectedRequestUserName(null);
@@ -363,11 +332,24 @@ const UserTable = () => {
         isLoading || (data?.results?.length ?? 0) === 0 ? 'loading' : 'idle';
 
     const handleRoleChange = useCallback(
-        async (id: string, value: UserType) => {
+        async (
+            id: string,
+            value: UserType,
+            userEmail: string,
+            userName: string | null,
+            oldRole: UserType
+        ) => {
             try {
                 setIsUpdating(true);
-                setEditedRole({ ...editedRole, [id]: value });
+                setEditedRole((prev) => ({ ...prev, [id]: value }));
                 await updateUserRole(id, value);
+                void notifyAdminAction({
+                    to: userEmail,
+                    userName,
+                    actionType: 'ROLE_CHANGED',
+                    oldRole,
+                    newRole: value,
+                });
                 mutate((currentData: any) => {
                     if (!currentData) return currentData;
                     return {
@@ -385,16 +367,28 @@ const UserTable = () => {
                 setIsUpdating(false);
             }
         },
-        [editedRole, mutate]
+        [mutate]
     );
 
     const handleMhpssLevelChange = useCallback(
-        async (id: string, value: MhpssLevel | null) => {
+        async (
+            id: string,
+            value: MhpssLevel | null,
+            userEmail: string,
+            userName: string | null,
+            oldMhpss: string | null
+        ) => {
             try {
                 setIsUpdating(true);
                 setEditedMhpssLevel((prev) => ({ ...prev, [id]: value }));
                 await updateUserMhpssLevel(id, value);
-
+                void notifyAdminAction({
+                    to: userEmail,
+                    userName,
+                    actionType: 'MHPSS_CHANGED',
+                    oldMhpss,
+                    newMhpss: value,
+                });
                 mutate((currentData: any) => {
                     if (!currentData) return currentData;
                     return {
@@ -406,7 +400,6 @@ const UserTable = () => {
                         ),
                     };
                 }, false);
-
                 setEditingRow(null);
                 setEditingField(null);
             } catch (error) {
@@ -423,12 +416,9 @@ const UserTable = () => {
             try {
                 setIsUpdating(true);
                 setEditedOrganization((prev) => ({ ...prev, [id]: value }));
-
                 await updateUserResponderOrganization(id, value.trim() || null);
-
                 mutate((currentData: any) => {
                     if (!currentData) return currentData;
-
                     return {
                         ...currentData,
                         results: currentData.results.map((user: User) =>
@@ -442,7 +432,6 @@ const UserTable = () => {
                         ),
                     };
                 }, false);
-
                 setEditingRow(null);
                 setEditingField(null);
             } catch (error) {
@@ -459,12 +448,9 @@ const UserTable = () => {
             try {
                 setIsUpdating(true);
                 setEditedRegion((prev) => ({ ...prev, [id]: value }));
-
                 await updateUserRegion(id, value);
-
                 mutate((currentData: any) => {
                     if (!currentData) return currentData;
-
                     return {
                         ...currentData,
                         results: currentData.results.map((user: User) =>
@@ -472,7 +458,6 @@ const UserTable = () => {
                         ),
                     };
                 }, false);
-
                 setEditingRow(null);
                 setEditingField(null);
             } catch (error) {
@@ -485,9 +470,10 @@ const UserTable = () => {
     );
 
     const openDeleteConfirm = useCallback(
-        (id: string, name?: string | null) => {
+        (id: string, name?: string | null, email?: string | null) => {
             setSelectedUserId(id);
             setSelectedUserName(name ?? null);
+            setSelectedUserEmail(email ?? null);
             setDeleteConfirmOpen(true);
         },
         []
@@ -495,31 +481,32 @@ const UserTable = () => {
 
     const handleDeleteUser = useCallback(async () => {
         if (!selectedUserId) return;
-
         try {
             setIsDeleting(true);
-
             const res = await fetch(`/api/admin/users/${selectedUserId}`, {
                 method: 'DELETE',
             });
-
             const json = await res.json().catch(() => null);
-
             if (!res.ok || !json?.success) {
                 alert(json?.message || 'Failed to delete user.');
                 return;
             }
-
+            void notifyAdminAction({
+                to: selectedUserEmail ?? '',
+                userName: selectedUserName ?? null,
+                actionType: 'ACCOUNT_DELETED',
+            });
             setDeleteConfirmOpen(false);
             setSelectedUserId(null);
             setSelectedUserName(null);
+            setSelectedUserEmail(null);
             mutate();
         } catch {
             alert('Failed to delete user.');
         } finally {
             setIsDeleting(false);
         }
-    }, [selectedUserId, mutate]);
+    }, [selectedUserId, selectedUserEmail, selectedUserName, mutate]);
 
     const getRoleIcon = (role: UserType) => {
         switch (role) {
@@ -541,7 +528,6 @@ const UserTable = () => {
                 : role === UserType.RESPONDER
                   ? 'text-amber-600'
                   : 'text-emerald-600';
-
         switch (role) {
             case UserType.ADMIN:
                 return <Shield className={`${className} ${color}`} />;
@@ -596,7 +582,6 @@ const UserTable = () => {
                                 <span className="font-mono text-sm font-semibold text-slate-900">
                                     {item.name}
                                 </span>
-
                                 <span className="text-xs text-slate-500">
                                     {item.gender ? item.gender : 'No gender'}
                                 </span>
@@ -659,12 +644,15 @@ const UserTable = () => {
                                                 ? roleOptions.map(String)
                                                 : []
                                         }
-                                        onAction={(key) =>
-                                            handleRoleChange(
+                                        onAction={(key) => {
+                                            void handleRoleChange(
                                                 item.id,
-                                                key as UserType
-                                            )
-                                        }
+                                                key as UserType,
+                                                item.email,
+                                                item.name,
+                                                item.role
+                                            );
+                                        }}
                                         className="bg-white/95 backdrop-blur-sm"
                                     >
                                         {roleOptions.map((option) => (
@@ -692,7 +680,6 @@ const UserTable = () => {
                                     >
                                         {item.role}
                                     </Chip>
-
                                     {item?.pendingRoleRequest?.status ===
                                         'PENDING' && (
                                         <>
@@ -705,7 +692,6 @@ const UserTable = () => {
                                                 Pending →{' '}
                                                 {item.pendingRoleRequest.toRole}
                                             </Chip>
-
                                             {item.pendingRoleRequest
                                                 .requestedMhpssLevel ? (
                                                 <Chip
@@ -778,7 +764,6 @@ const UserTable = () => {
                                             </Chip>
                                         </Button>
                                     </DropdownTrigger>
-
                                     <DropdownMenu
                                         disabledKeys={
                                             isUpdating
@@ -787,11 +772,14 @@ const UserTable = () => {
                                         }
                                         onAction={(key) => {
                                             const value = String(key);
-                                            handleMhpssLevelChange(
+                                            void handleMhpssLevelChange(
                                                 item.id,
                                                 value === 'NONE'
                                                     ? null
-                                                    : (value as MhpssLevel)
+                                                    : (value as MhpssLevel),
+                                                item.email,
+                                                item.name,
+                                                item.mhpssLevel ?? null
                                             );
                                         }}
                                         className="bg-white/95 backdrop-blur-sm"
@@ -865,14 +853,14 @@ const UserTable = () => {
                                     }
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter') {
-                                            handleOrganizationChange(
+                                            void handleOrganizationChange(
                                                 item.id,
                                                 orgValue
                                             );
                                         }
                                     }}
                                     onBlur={() =>
-                                        handleOrganizationChange(
+                                        void handleOrganizationChange(
                                             item.id,
                                             orgValue
                                         )
@@ -941,14 +929,13 @@ const UserTable = () => {
                                             {regionValue || 'No region'}
                                         </Button>
                                     </DropdownTrigger>
-
                                     <DropdownMenu
                                         disabledKeys={
                                             isUpdating ? regionOptions : []
                                         }
                                         onAction={(key) => {
                                             const value = String(key);
-                                            handleRegionChange(
+                                            void handleRegionChange(
                                                 item.id,
                                                 value === 'NONE' ? null : value
                                             );
@@ -1018,7 +1005,8 @@ const UserTable = () => {
                                         onPress={() =>
                                             openDeleteConfirm(
                                                 item.id,
-                                                item.name
+                                                item.name,
+                                                item.email
                                             )
                                         }
                                     >
@@ -1076,7 +1064,7 @@ const UserTable = () => {
     return (
         <div className={`min-h-screen ${maroonTheme.background}`}>
             <div className="container mx-auto px-4 py-8 max-w-7xl">
-                {/* ✅ HERO */}
+                {/* HERO */}
                 <div
                     className={`rounded-[28px] overflow-hidden ${maroonTheme.shell} mb-6`}
                 >
@@ -1095,7 +1083,6 @@ const UserTable = () => {
                                     levels
                                 </p>
                             </div>
-
                             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                                 <Button
                                     isIconOnly
@@ -1105,7 +1092,6 @@ const UserTable = () => {
                                 >
                                     <ArrowLeft className="w-5 h-5" />
                                 </Button>
-                                {/* ✅ Total Users pill (gradient) */}
                                 <div
                                     className={`flex items-center gap-2 rounded-2xl px-4 py-3 ${maroonTheme.statPill}`}
                                 >
@@ -1114,8 +1100,6 @@ const UserTable = () => {
                                         {data?.count || 0} Total Users
                                     </span>
                                 </div>
-
-                                {/* ✅ Legend button (orange-red gradient) */}
                                 <Button
                                     onPress={onOpen}
                                     size="lg"
@@ -1128,7 +1112,7 @@ const UserTable = () => {
                         </div>
                     </div>
 
-                    {/* ✅ Tabs row */}
+                    {/* Tabs row */}
                     <div className={`px-6 py-4 ${maroonTheme.tabWrap}`}>
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                             <div className="flex gap-2">
@@ -1143,7 +1127,6 @@ const UserTable = () => {
                                 >
                                     Users
                                 </button>
-
                                 <button
                                     type="button"
                                     onClick={() => {
@@ -1164,7 +1147,6 @@ const UserTable = () => {
                             </div>
 
                             <div className="flex flex-col lg:flex-row lg:items-center gap-3 w-full sm:w-auto">
-                                {/* ✅ Search */}
                                 <Input
                                     value={searchTerm}
                                     onValueChange={setSearchTerm}
@@ -1179,13 +1161,11 @@ const UserTable = () => {
                                         inputWrapper:
                                             'bg-white/85 backdrop-blur-sm border-2 border-[#A11B1B]/35 shadow-sm ' +
                                             'hover:border-[#A11B1B]/60 focus-within:border-[#A11B1B] ' +
-                                            'focus-within:shadow-[0_0_0_4px_rgba(161,27,27,0.12)] ' +
-                                            'transition-all',
+                                            'focus-within:shadow-[0_0_0_4px_rgba(161,27,27,0.12)] transition-all',
                                         input: 'text-slate-800 placeholder:text-slate-400',
                                     }}
                                 />
 
-                                {/* ✅ Role Filter */}
                                 <Dropdown>
                                     <DropdownTrigger>
                                         <Button
@@ -1247,7 +1227,6 @@ const UserTable = () => {
                                     </DropdownMenu>
                                 </Dropdown>
 
-                                {/* ✅ MHPSS Filter */}
                                 <Dropdown>
                                     <DropdownTrigger>
                                         <Button
@@ -1327,7 +1306,6 @@ const UserTable = () => {
                                     </DropdownMenu>
                                 </Dropdown>
 
-                                {/* ✅ Clear filters */}
                                 {(searchTerm ||
                                     roleFilter !== 'ALL' ||
                                     mhpssFilter !== 'ALL') && (
@@ -1352,7 +1330,7 @@ const UserTable = () => {
                     </div>
                 </div>
 
-                {/* ✅ CONTENT */}
+                {/* CONTENT */}
                 <Card className={maroonTheme.innerPanel}>
                     <CardBody className="p-4 sm:p-6">
                         {activeTab === 'USERS' ? (
@@ -1382,7 +1360,6 @@ const UserTable = () => {
                                             </TableColumn>
                                         )}
                                     </TableHeader>
-
                                     <TableBody
                                         emptyContent={
                                             <div className="text-center py-14">
@@ -1459,7 +1436,6 @@ const UserTable = () => {
                                             requests.
                                         </div>
                                     </div>
-
                                     <Button
                                         size="sm"
                                         variant="bordered"
@@ -1502,7 +1478,6 @@ const UserTable = () => {
                                                                 )
                                                             </span>
                                                         </div>
-
                                                         <div className="mt-2 flex flex-wrap gap-2 items-center">
                                                             <Chip
                                                                 size="sm"
@@ -1512,7 +1487,6 @@ const UserTable = () => {
                                                                 From:{' '}
                                                                 {r.fromRole}
                                                             </Chip>
-
                                                             <Chip
                                                                 size="sm"
                                                                 variant="flat"
@@ -1520,7 +1494,6 @@ const UserTable = () => {
                                                             >
                                                                 To: {r.toRole}
                                                             </Chip>
-
                                                             {r.requestedMhpssLevel ? (
                                                                 <Chip
                                                                     size="sm"
@@ -1533,7 +1506,6 @@ const UserTable = () => {
                                                                     }
                                                                 </Chip>
                                                             ) : null}
-
                                                             {r.requestedResponderOrganization ? (
                                                                 <Chip
                                                                     size="sm"
@@ -1546,7 +1518,6 @@ const UserTable = () => {
                                                                     }
                                                                 </Chip>
                                                             ) : null}
-
                                                             {r.requestedMhpssCertificateFileUrl ? (
                                                                 <a
                                                                     href={
@@ -1561,7 +1532,6 @@ const UserTable = () => {
                                                                 </a>
                                                             ) : null}
                                                         </div>
-
                                                         <div className="text-xs text-slate-500 mt-2">
                                                             Submitted:{' '}
                                                             {new Date(
@@ -1569,7 +1539,6 @@ const UserTable = () => {
                                                             ).toLocaleString()}
                                                         </div>
                                                     </div>
-
                                                     <div className="flex gap-2">
                                                         <button
                                                             type="button"
@@ -1589,7 +1558,6 @@ const UserTable = () => {
                                                         >
                                                             Reject
                                                         </button>
-
                                                         <button
                                                             type="button"
                                                             disabled={
@@ -1633,7 +1601,6 @@ const UserTable = () => {
                         <ModalHeader className="font-bold">
                             Confirm Request Action
                         </ModalHeader>
-
                         <ModalBody>
                             <div className="space-y-1 text-slate-700">
                                 <p>
@@ -1645,13 +1612,11 @@ const UserTable = () => {
                                     </span>{' '}
                                     this pending request?
                                 </p>
-
                                 <p className="font-semibold text-slate-900">
                                     {selectedRequestUserName || 'Unknown User'}
                                 </p>
                             </div>
                         </ModalBody>
-
                         <ModalFooter>
                             <Button
                                 variant="light"
@@ -1665,7 +1630,6 @@ const UserTable = () => {
                             >
                                 Cancel
                             </Button>
-
                             <Button
                                 className="bg-[#7B122F] text-white"
                                 onPress={confirmRequestAction}
@@ -1684,13 +1648,13 @@ const UserTable = () => {
                         setDeleteConfirmOpen(false);
                         setSelectedUserId(null);
                         setSelectedUserName(null);
+                        setSelectedUserEmail(null);
                     }}
                 >
                     <ModalContent>
                         <ModalHeader className="font-bold">
                             Confirm Action
                         </ModalHeader>
-
                         <ModalBody>
                             <div className="space-y-1 text-slate-700">
                                 <p>
@@ -1700,13 +1664,11 @@ const UserTable = () => {
                                     </span>{' '}
                                     this user:
                                 </p>
-
                                 <p className="font-semibold text-slate-900">
                                     {selectedUserName || 'Unknown User'}
                                 </p>
                             </div>
                         </ModalBody>
-
                         <ModalFooter>
                             <Button
                                 variant="light"
@@ -1714,12 +1676,12 @@ const UserTable = () => {
                                     setDeleteConfirmOpen(false);
                                     setSelectedUserId(null);
                                     setSelectedUserName(null);
+                                    setSelectedUserEmail(null);
                                 }}
                                 isDisabled={isDeleting}
                             >
                                 Cancel
                             </Button>
-
                             <Button
                                 className="bg-[#7B122F] text-white"
                                 onPress={handleDeleteUser}
