@@ -98,13 +98,13 @@ const Carousel = ({ isAuthenticated = false }: CarouselProps) => {
     return (
         <section
             id="tools"
-            className="relative overflow-x-hidden overflow-y-visible bg-white text-slate-900"
+            className="relative overflow-x-hidden overflow-y-hidden bg-white text-slate-900"
         >
             <div className="relative container mx-auto px-6 w-full max-w-7xl pt-14 pb-10">
                 {/* Header */}
                 <div className="flex items-start justify-between gap-6">
                     <div className="max-w-none">
-                        <h2 className="text-4xl sm:text-5xl font-black tracking-tight text-slate-900 bg-gradient-to-r from-[#7A0F1E] via-[#8B1538] to-[#A11A2F] bg-clip-text text-transparent">
+                        <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-slate-900 bg-gradient-to-r from-[#7A0F1E] via-[#8B1538] to-[#A11A2F] bg-clip-text text-transparent">
                             Harmonized DRRM-H
                         </h2>
 
