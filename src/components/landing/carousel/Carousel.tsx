@@ -123,9 +123,8 @@ const Carousel = ({ isAuthenticated = false }: CarouselProps) => {
                             size="lg"
                             onPress={scrollPrev}
                             className="
-                rounded-xl bg-white border-red-300 text-red-700
-                hover:bg-red-50 hover:border-red-400
-                shadow-sm hover:shadow-md transition-all
+                rounded-xl bg-[#8B1538] text-white
+                shadow-md hover:bg-[#7A0F1E] hover:shadow-lg transition-all
               "
                             aria-label="Previous item"
                         >
