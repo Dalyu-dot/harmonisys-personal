@@ -52,11 +52,11 @@ interface HeaderProps {
 }
 
 const toolIconMap: Record<string, React.ReactNode> = {
-    'Incident Reporting System': <ClipboardList className="w-4 h-4" />,
-    REDAS: <Waves className="w-4 h-4" />,
-    Unahon: <Brain className="w-4 h-4" />,
-    'Mi Salud': <ActivityIcon className="w-4 h-4" />,
-    HazardHunter: <MapPinned className="w-4 h-4" />,
+    'Incident Reporting System': <Image src="/iris_logo.png" alt="IRS" width={16} height={16} className="w-4 h-4 object-contain" />,
+    REDAS: <Image src="/redas/REDAS_logo_name.png" alt="REDAS" width={16} height={16} className="w-4 h-4 object-contain" />,
+    Unahon: <Image src="/unahon_logo.png" alt="Unahon" width={16} height={16} className="w-4 h-4 object-contain" />,
+    'Mi Salud': <Image src="/misalud_logo.png" alt="Mi Salud" width={16} height={16} className="w-4 h-4 object-contain" />,
+    HazardHunter: <Image src="/hazardHunter_logo.png" alt="HazardHunter" width={16} height={16} className="w-4 h-4 object-contain" />,
 };
 
 const headerThemes: Record<string, string> = {
